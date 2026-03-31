@@ -2268,12 +2268,16 @@ async function generateForecast() {
         system:sysPrompt, messages:[{role:'user',content:'Напиши прогноз на эту неделю.'}]})
     });
     const json = await res.json();
+    console.log('[Forecast] status:', res.status, 'body:', JSON.stringify(json).slice(0,200));
 
     document.getElementById('w-loading').classList.remove('vis');
 
     if (!res.ok || !json.content?.[0]?.text) {
       const errMsg = json.error?.message || json.message || `HTTP ${res.status}`;
-      document.getElementById('forecastText').innerHTML = `<p style="color:var(--muted);font-size:14px">Не удалось получить прогноз. Попробуй ещё раз.<br><span style="font-size:11px;opacity:.6">${errMsg}</span></p>`;
+      console.warn('[Forecast] error:', errMsg);
+      document.getElementById('forecastText').innerHTML =
+        `<p style="color:var(--muted);font-size:14px;font-style:normal">Не удалось получить прогноз. Попробуй ещё раз.</p>
+         <p style="color:var(--muted);font-size:11px;font-style:normal;opacity:.5;margin-top:.5rem">${errMsg}</p>`;
       document.getElementById('moodDot').style.background = t.color;
       document.getElementById('resultLabel').textContent = t.label;
       document.getElementById('moonBadge').style.display = 'none';
@@ -2295,6 +2299,7 @@ async function generateForecast() {
     document.getElementById('w-result').classList.add('vis');
     document.getElementById('week-header-block').style.display = 'none';
   } catch(e) {
+    console.error('[Forecast] fetch error:', e.message);
     document.getElementById('w-loading').classList.remove('vis');
     document.getElementById('forecastText').innerHTML = `<p style="color:#f08;font-size:13px">${e.message}</p>`;
     document.getElementById('w-result').classList.add('vis');
