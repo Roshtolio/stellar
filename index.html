@@ -1,0 +1,2522 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stellar</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0e0e14;
+  --surface: #16161f;
+  --surface2: #1c1c28;
+  --border: rgba(255,255,255,0.07);
+  --ba: rgba(155,143,207,0.35);
+  --text: #e8e6f0;
+  --muted: rgba(232,230,240,0.45);
+  --accent: #9b8fcf;
+  --adim: rgba(155,143,207,0.15);
+}
+html,body { background:var(--bg); color:var(--text); font-family:'Jost',sans-serif; font-weight:300; min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+/* ── Screens ── */
+.screen { display:none; max-width:480px; margin:0 auto; padding:0 1.25rem 3rem; animation:fadeUp .3s ease; }
+.screen.active { display:block; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── Top bar ── */
+.topbar {
+  position:sticky; top:0; z-index:50;
+  background:rgba(14,14,20,0.95);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  padding:0 1.25rem;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  height:56px;
+  max-width:100%;
+  cursor:pointer;
+}
+.topbar-center { display:flex; align-items:center; justify-content:center; gap:8px; }
+.topbar h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:22px; letter-spacing:.28em; text-transform:uppercase; color:var(--text); }
+.topbar-back {
+  justify-self:end;
+  background:transparent; border:none; color:var(--muted);
+  font-family:'Jost',sans-serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+  cursor:pointer; padding:6px 0; display:none; align-items:center; gap:4px; transition:color .2s;
+}
+.topbar-back.vis { display:flex; }
+.topbar-back:hover { color:var(--text); }
+
+/* ── Logo block ── */
+.logo-block { text-align:center; padding:2.5rem 0 2rem; }
+.logo-mark { margin:0 auto 1rem; display:block; filter:drop-shadow(0 0 12px rgba(155,143,207,.3)); }
+.logo-block h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:34px; letter-spacing:.3em; text-transform:uppercase; margin-bottom:.4rem; }
+.logo-block p { font-size:14px; color:var(--muted); letter-spacing:.06em; line-height:1.5; }
+
+/* ── Inputs ── */
+.s-field { margin-bottom:1.2rem; }
+.s-field label { display:block; font-size:13px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:.5rem; }
+.s-field input, .s-field select {
+  width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px;
+  color:var(--text); font-family:'Jost',sans-serif; font-size:17px; font-weight:300;
+  padding:12px 14px; transition:border-color .2s; -webkit-appearance:none; appearance:none;
+}
+.s-field input::placeholder, .s-field select option { color:var(--muted); }
+.s-field input:focus, .s-field select:focus { outline:none; border-color:var(--ba); }
+.s-field select { background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(232,230,240,0.4)' stroke-width='1.5' fill='none'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 14px center; padding-right:36px; }
+.date-row { display:grid; grid-template-columns:1fr 1fr 1.4fr; gap:8px; }
+.time-row { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; }
+
+/* ── Buttons ── */
+.s-btn {
+  width:100%; background:transparent; border:1px solid var(--ba); border-radius:8px;
+  color:var(--accent); font-family:'Jost',sans-serif; font-size:15px; font-weight:400;
+  letter-spacing:.12em; text-transform:uppercase; padding:14px; cursor:pointer;
+  transition:all .2s; margin-bottom:.8rem; display:block;
+}
+.s-btn:hover { background:var(--adim); }
+.s-btn.primary { background:var(--adim); border-color:var(--accent); }
+.s-btn.primary:hover { background:rgba(155,143,207,.25); }
+.s-btn.danger { border-color:rgba(239,68,68,.4); color:#ef4444; }
+.s-btn.danger:hover { background:rgba(239,68,68,.08); }
+.s-link { color:var(--muted); font-size:14px; letter-spacing:.06em; text-align:center; display:block; margin-top:.5rem; cursor:pointer; text-decoration:underline; text-underline-offset:3px; transition:color .2s; }
+.s-link:hover { color:var(--text); }
+.gender-row { display:flex; flex-direction:column; gap:8px; }
+.gender-btn { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:8px; color:var(--muted); font-family:'Jost',sans-serif; font-size:16px; padding:12px; cursor:pointer; transition:all .2s; }
+.gender-btn:hover { border-color:var(--ba); color:var(--text); }
+.gender-btn.sel { background:var(--adim); border-color:var(--accent); color:var(--accent); }
+
+/* ── Section title ── */
+.screen-title { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:26px; text-align:center; margin:1.8rem 0 1.5rem; }
+
+/* ── HOME grid ── */
+.home-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding-top:1.25rem; }
+
+/* Profile tile */
+.tile-profile {
+  grid-column:1/-1;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:1.25rem;
+  cursor:pointer;
+  transition:border-color .2s;
+  position:relative;
+  overflow:hidden;
+  min-height:100px;
+}
+.tile-profile::before {
+  content:'';
+  position:absolute; right:-20px; top:-20px;
+  width:140px; height:140px;
+  background:radial-gradient(circle, rgba(155,143,207,.1) 0%, transparent 70%);
+  pointer-events:none;
+}
+.tile-profile:hover { border-color:var(--ba); }
+.tp-name { font-family:'Cormorant Garamond',serif; font-size:31px; font-weight:300; color:var(--text); margin-bottom:.3rem; }
+.tp-date { font-size:14px; color:var(--muted); line-height:1.6; margin-bottom:1rem; }
+.tp-moon-row { display:flex; align-items:center; gap:8px; padding:10px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:.9rem; }
+.tp-moon-icon { font-size:22px; line-height:1; }
+.tp-moon-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+.tp-moon-val { font-size:15px; color:var(--text); font-weight:400; }
+.tp-signs { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.tp-sign-item { text-align:center; }
+.tp-sign-glyph { font-size:22px; line-height:1; margin-bottom:4px; }
+.tp-sign-name { font-size:16px; color:var(--text); font-weight:400; }
+.tp-sign-label { font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; }
+
+/* Empty profile tile */
+.tile-profile-empty { text-align:center; padding:1.5rem; }
+.tile-profile-empty p { font-size:13px; color:var(--muted); margin-bottom:1rem; line-height:1.6; }
+
+/* Nav tiles */
+.tile-nav {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:1.25rem 1rem 1.1rem;
+  cursor:pointer;
+  transition:all .2s;
+  display:flex; flex-direction:column;
+  gap:8px;
+  min-height:110px;
+}
+.tile-nav:hover { border-color:var(--ba); background:rgba(155,143,207,.04); }
+.tile-nav:active { transform:scale(.98); }
+.tile-icon { font-size:22px; line-height:1; }
+.tile-title { font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:400; color:var(--text); line-height:1.3; }
+.tile-sub { font-size:12px; color:var(--muted); letter-spacing:.06em; margin-top:auto; }
+
+/* ── Profile view ── */
+.profile-card {
+  background:var(--surface); border:1px solid var(--border); border-radius:14px;
+  padding:1.4rem; margin-bottom:1.2rem; position:relative; overflow:hidden;
+}
+.profile-card::before {
+  content:''; position:absolute; right:-30px; top:-30px;
+  width:180px; height:180px;
+  background:radial-gradient(circle, rgba(155,143,207,.08) 0%, transparent 70%);
+  pointer-events:none;
+}
+.pc-name { font-family:'Cormorant Garamond',serif; font-size:34px; font-weight:300; color:var(--text); margin-bottom:.4rem; }
+.pc-birth { font-size:14px; color:var(--muted); line-height:1.7; margin-bottom:1.1rem; }
+.pc-moon-row { display:flex; align-items:center; gap:10px; padding:12px 0; border-top:1px solid var(--border); border-bottom:1px solid var(--border); margin-bottom:1.1rem; cursor:default; }
+.pc-moon-icon { font-size:28px; line-height:1; }
+.pc-moon-info {}
+.pc-moon-label { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+.pc-moon-val { font-size:16px; color:var(--text); font-weight:400; margin-top:2px; }
+.pc-signs { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.pc-sign-item { text-align:center; }
+.pc-sign-glyph { font-size:28px; line-height:1; margin-bottom:6px; }
+.pc-sign-name { font-size:18px; color:var(--text); font-weight:400; }
+.pc-sign-label { font-size:11px; color:var(--muted); letter-spacing:.06em; text-transform:uppercase; margin-top:2px; }
+
+/* User row */
+.user-row { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:1.2rem; font-size:13px; }
+.user-email { color:var(--accent); }
+.user-label { color:var(--muted); margin-right:6px; }
+
+/* ── Portrait result ── */
+.portrait-box { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.4rem; margin-bottom:1.2rem; font-size:16px; line-height:1.85; color:rgba(232,230,240,.85); }
+.portrait-box h3 { font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:400; color:var(--accent); margin:1.2rem 0 .4rem; }
+.portrait-box h3:first-child { margin-top:0; }
+.portrait-box strong { color:var(--text); font-weight:500; }
+.portrait-box ul { padding-left:1.2rem; }
+.portrait-box li { margin-bottom:.3rem; }
+.save-notice { text-align:center; font-size:13px; color:var(--accent); letter-spacing:.08em; margin-bottom:.8rem; }
+
+/* ── My portraits list ── */
+.portrait-card-item { display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:13px 14px; margin-bottom:10px; transition:border-color .2s; }
+.portrait-card-item:hover { border-color:var(--ba); }
+.portrait-card-info { flex:1; cursor:pointer; }
+.portrait-card-item h3 { font-size:16px; color:var(--accent); margin-bottom:3px; font-weight:400; }
+.portrait-card-item p { font-size:13px; color:var(--muted); }
+.portrait-delete-btn { flex-shrink:0; background:transparent; border:1px solid rgba(255,255,255,.1); border-radius:6px; color:var(--muted); font-size:14px; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; line-height:1; }
+.portrait-delete-btn:hover { border-color:rgba(239,68,68,.5); color:#ef4444; background:rgba(239,68,68,.08); }
+
+/* ── Week screen ── */
+.week-header { text-align:center; margin-bottom:2.5rem; padding-top:1.5rem; }
+.w-logo { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:15px; letter-spacing:.3em; text-transform:uppercase; color:var(--accent); margin-bottom:1.5rem; }
+.w-natal { display:inline-flex; align-items:center; gap:5px; font-size:13px; color:var(--muted); letter-spacing:.08em; background:var(--surface); border:1px solid var(--border); border-radius:20px; padding:5px 14px; margin-bottom:1rem; }
+.w-prompt { font-family:'Cormorant Garamond',serif; font-size:26px; font-weight:300; line-height:1.4; color:var(--text); margin-bottom:.4rem; }
+.w-sub { font-size:14px; color:var(--muted); letter-spacing:.05em; }
+.cards-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:2.5rem; }
+@media(max-width:420px) { .cards-grid { grid-template-columns:repeat(2,1fr); } }
+.mood-card { aspect-ratio:2/3; border-radius:10px; border:1px solid var(--border); cursor:pointer; position:relative; overflow:hidden; transition:transform .2s,border-color .2s; background:var(--surface); }
+.mood-card:hover { transform:translateY(-3px); border-color:rgba(255,255,255,.15); }
+.mood-card.selected { border-color:var(--accent); border-width:1.5px; transform:translateY(-3px); }
+.mood-card.dimmed { opacity:.35; }
+.card-art { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+.card-label { position:absolute; bottom:0; left:0; right:0; padding:10px 8px; background:linear-gradient(to top,rgba(10,10,16,.92) 60%,transparent); text-align:center; }
+.card-name { font-family:'Cormorant Garamond',serif; font-size:15px; font-weight:400; letter-spacing:.04em; }
+.card-sub { font-size:11px; color:var(--muted); letter-spacing:.06em; margin-top:2px; }
+.w-loading { text-align:center; padding:2rem 0; display:none; }
+.w-loading.vis { display:block; }
+.w-load-text { font-size:13px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; animation:pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+.w-result { display:none; }
+.w-result.vis { display:block; }
+.w-result-header { display:flex; align-items:center; gap:10px; margin-bottom:1.4rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+.mood-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.w-result-label { font-size:13px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; }
+.moon-badge { display:none; align-items:center; gap:6px; font-size:13px; color:var(--muted); letter-spacing:.06em; margin-bottom:1rem; padding-bottom:.8rem; border-bottom:1px solid var(--border); }
+.forecast-text { font-family:'Cormorant Garamond',serif; font-size:21px; font-weight:300; line-height:1.75; color:var(--text); font-style:italic; }
+.forecast-text p+p { margin-top:1rem; }
+.reset-btn { margin-top:2rem; background:transparent; border:none; color:var(--muted); font-family:'Jost',sans-serif; font-size:13px; letter-spacing:.1em; text-transform:uppercase; cursor:pointer; text-decoration:underline; text-underline-offset:3px; display:block; padding:.5rem; transition:color .2s; }
+.reset-btn:hover { color:var(--text); }
+
+/* ── Tarot loading ── */
+.tarot-loading { text-align:center; padding:4rem 0 2rem; }
+.tarot-cards-row { display:flex; justify-content:center; gap:14px; margin-bottom:2rem; }
+.tc { width:76px; height:114px; border-radius:8px; position:relative; perspective:800px; }
+.tc-inner { width:100%; height:100%; position:relative; transform-style:preserve-3d; transition:transform .7s ease-in-out; }
+.tc-inner.flipped { transform:rotateY(180deg); }
+.tc-face { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:8px; overflow:hidden; }
+.tc-back { background:var(--surface2); border:1px solid var(--ba); display:flex; align-items:center; justify-content:center; }
+.tc-front { transform:rotateY(180deg); }
+.tc-front img { width:100%; height:100%; object-fit:cover; }
+.tc-load-text { font-size:11px; color:var(--muted); letter-spacing:.12em; text-transform:uppercase; animation:pulse 1.8s ease-in-out infinite; }
+
+/* ── Modal ── */
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:200; display:flex; align-items:flex-end; justify-content:center; animation:fadeIn .2s ease; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.modal-sheet { background:#1a1a26; border:1px solid var(--ba); border-bottom:none; border-radius:18px 18px 0 0; width:100%; max-width:480px; padding:1.5rem 1.5rem calc(1.5rem + env(safe-area-inset-bottom)); animation:slideUp .25s ease; }
+@keyframes slideUp { from{transform:translateY(40px)} to{transform:translateY(0)} }
+.modal-title { font-family:'Cormorant Garamond',serif; font-size:18px; font-weight:300; color:var(--text); margin-bottom:.4rem; }
+.modal-sub { font-size:12px; color:var(--muted); margin-bottom:1.4rem; line-height:1.5; }
+.modal-portrait-row { display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:12px 14px; margin-bottom:8px; }
+.modal-portrait-info h4 { font-size:13px; font-weight:400; color:var(--text); margin-bottom:2px; }
+.modal-portrait-info p { font-size:11px; color:var(--muted); }
+.modal-replace-btn { flex-shrink:0; background:transparent; border:1px solid rgba(155,143,207,.4); border-radius:6px; color:var(--accent); font-family:'Jost',sans-serif; font-size:11px; letter-spacing:.1em; text-transform:uppercase; padding:7px 14px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.modal-replace-btn:hover { background:var(--adim); border-color:var(--accent); }
+.modal-cancel { width:100%; background:transparent; border:none; color:var(--muted); font-family:'Jost',sans-serif; font-size:12px; letter-spacing:.08em; text-transform:uppercase; padding:14px; cursor:pointer; margin-top:.4rem; transition:color .2s; }
+.modal-cancel:hover { color:var(--text); }
+
+svg { display:block; }
+
+/* ── Compat relation type buttons ── */
+.cp-rel-btn {
+  flex:1;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--muted);
+  font-family:'Jost',sans-serif;
+  font-size:14px;
+  font-weight:400;
+  padding:10px 6px;
+  cursor:pointer;
+  transition:all .2s;
+  text-align:center;
+}
+.cp-rel-btn:hover { border-color:var(--ba); color:var(--text); }
+.cp-rel-btn.active { background:var(--adim); border-color:var(--accent); color:var(--accent); }
+
+/* ── Divider ── */
+.section-divider { height:1px; background:var(--border); margin:1.2rem 0; }
+
+/* ── Schema legend ── */
+#sc-legend { margin-top:1.5rem; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:1.1rem 1.3rem; }
+#sc-legend h3 { font-family:'Cormorant Garamond',serif; font-size:16px; font-weight:300; color:var(--accent); margin-bottom:.8rem; letter-spacing:.04em; }
+.sc-legend-grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 16px; margin-bottom:.8rem; }
+.sc-legend-item { font-size:12px; color:var(--muted); line-height:1.6; }
+.sc-legend-item strong { color:var(--text); font-weight:400; }
+</style>
+</head>
+<body>
+
+<!-- ── TOP BAR ── -->
+<header class="topbar" onclick="goHome()">
+  <div></div>
+  <div class="topbar-center">
+    <svg width="22" height="22" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="38" fill="none" stroke="#9b8fcf" stroke-width="1" opacity="0.4"/>
+      <path d="M60 22 L63 54 L76 34 L69 56 L94 44 L74 60 L94 76 L69 64 L76 86 L63 66 L60 98 L57 66 L44 86 L51 64 L26 76 L46 60 L26 44 L51 56 L44 34 L57 54 Z" fill="none" stroke="#9b8fcf" stroke-width="1.5" opacity="0.8"/>
+      <circle cx="60" cy="60" r="7" fill="#9b8fcf" opacity="0.25"/>
+      <circle cx="60" cy="60" r="3" fill="#9b8fcf" opacity="0.7"/>
+    </svg>
+    <h1>Stellar</h1>
+  </div>
+  <button class="topbar-back" id="topbar-back" onclick="event.stopPropagation();goBack()">← Назад</button>
+</header>
+
+<!-- ══════════════════════════════════════════════
+  screen-auth
+══════════════════════════════════════════════ -->
+<div id="screen-auth" class="screen active">
+  <div class="logo-block">
+    <svg class="logo-mark" width="64" height="64" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="60" cy="60" r="38" fill="none" stroke="#9b8fcf" stroke-width="1" opacity="0.4"/>
+      <path d="M60 22 L63 54 L76 34 L69 56 L94 44 L74 60 L94 76 L69 64 L76 86 L63 66 L60 98 L57 66 L44 86 L51 64 L26 76 L46 60 L26 44 L51 56 L44 34 L57 54 Z" fill="none" stroke="#9b8fcf" stroke-width="1.5" opacity="0.8"/>
+      <circle cx="60" cy="60" r="7" fill="#9b8fcf" opacity="0.25"/>
+      <circle cx="60" cy="60" r="3" fill="#9b8fcf" opacity="0.7"/>
+    </svg>
+    <h1>Stellar</h1>
+    <p>Астрология и психологический портрет</p>
+  </div>
+
+  <div id="auth-form-wrap">
+    <div class="s-field">
+      <label>Email</label>
+      <input type="email" id="p-email" placeholder="your@email.com">
+    </div>
+    <div class="s-field">
+      <label>Пароль</label>
+      <input type="password" id="p-pass" placeholder="Минимум 6 символов">
+    </div>
+    <button class="s-btn primary" onclick="doLogin()">Войти</button>
+    <button class="s-btn" onclick="doRegister()">Зарегистрироваться</button>
+    <a class="s-link" onclick="doSkip()">Продолжить без регистрации</a>
+  </div>
+
+  <div id="user-info-wrap" style="display:none">
+    <div class="user-row">
+      <span><span class="user-label">Вы вошли:</span><span class="user-email" id="u-email"></span></span>
+      <button class="s-btn" style="width:auto;padding:6px 14px;margin:0;font-size:11px" onclick="doLogout()">Выйти</button>
+    </div>
+    <button class="s-btn primary" onclick="goHome()">Открыть Stellar</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-home  (main hub)
+══════════════════════════════════════════════ -->
+<div id="screen-home" class="screen">
+  <div class="home-grid">
+
+    <!-- Profile tile -->
+    <div class="tile-profile" id="home-profile-tile" onclick="goToProfile()">
+      <!-- filled by JS -->
+    </div>
+
+    <!-- Day portrait -->
+    <div class="tile-nav" style="grid-column:1/-1" id="tile-day-portrait" onclick="goToDayPortrait()">
+      <div class="tile-icon">☀︎</div>
+      <div class="tile-title">Портрет дня</div>
+      <div class="tile-sub" id="tile-dp-sub">Композит твоего портрета и портрета сегодняшнего дня</div>
+    </div>
+
+    <!-- Forecast -->
+    <div class="tile-nav" onclick="goToWeek()">
+      <div class="tile-icon">🌙</div>
+      <div class="tile-title">Прогноз<br>на неделю</div>
+      <div class="tile-sub">Карты состояния</div>
+    </div>
+
+    <!-- New portrait -->
+    <div class="tile-nav" onclick="goToNewPortrait()">
+      <div class="tile-icon">✦</div>
+      <div class="tile-title">Портрет по<br>дате рождения</div>
+      <div class="tile-sub">Психологический разбор</div>
+    </div>
+
+    <!-- Schema positions -->
+    <div class="tile-nav" onclick="goToSchema()">
+      <div class="tile-icon">⬡</div>
+      <div class="tile-title">Расчёт<br>позиций</div>
+      <div class="tile-sub">Схема по дате рождения</div>
+    </div>
+
+    <!-- Compatibility -->
+    <div class="tile-nav" onclick="goToCompat()">
+      <div class="tile-icon">◈</div>
+      <div class="tile-title">Совмести-<br>мость</div>
+      <div class="tile-sub">Партнёрский портрет</div>
+    </div>
+
+    <!-- My portraits -->
+    <div class="tile-nav" style="grid-column:1/-1" onclick="showMyPortraits()">
+      <div class="tile-icon">📜</div>
+      <div class="tile-title">Мои портреты</div>
+      <div class="tile-sub">Сохранённые разборы</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-profile  (full profile view)
+══════════════════════════════════════════════ -->
+<div id="screen-profile" class="screen">
+  <div id="profile-card-content">
+    <!-- filled by JS -->
+  </div>
+  <button class="s-btn primary" onclick="showScreen('screen-profile-edit')">Обновить данные профиля</button>
+  <div id="profile-logout-wrap"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-profile-edit
+══════════════════════════════════════════════ -->
+<div id="screen-profile-edit" class="screen">
+  <div class="screen-title">Мой профиль</div>
+
+  <div class="s-field">
+    <label>Имя</label>
+    <input type="text" id="pe-name" placeholder="Твоё имя">
+  </div>
+
+  <div class="s-field">
+    <label>Пол</label>
+    <div class="gender-row">
+      <button class="gender-btn" id="pe-gbm" onclick="peSelGender('male')">Мужской</button>
+      <button class="gender-btn" id="pe-gbf" onclick="peSelGender('female')">Женский</button>
+    </div>
+  </div>
+
+  <div class="s-field">
+    <label>Дата рождения</label>
+    <div class="date-row">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">День</div>
+        <input type="text" id="pe-day" placeholder="28" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Месяц</div>
+        <input type="text" id="pe-month" placeholder="6" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Год</div>
+        <input type="text" id="pe-year" placeholder="1990" maxlength="4" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <div class="s-field">
+    <label>Время рождения <span style="color:var(--muted);font-size:10px;text-transform:none;letter-spacing:0">(необязательно)</span></label>
+    <div class="time-row">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Час</div>
+        <input type="text" id="pe-hour" placeholder="20" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Минута</div>
+        <input type="text" id="pe-min" placeholder="50" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">UTC</div>
+        <input type="text" id="pe-utc" placeholder="+3" maxlength="4">
+      </div>
+    </div>
+  </div>
+
+  <div class="s-field">
+    <label>Страна рождения</label>
+    <input type="text" id="pe-country" placeholder="Россия">
+  </div>
+
+  <div class="s-field">
+    <label>Город рождения</label>
+    <input type="text" id="pe-city" placeholder="Москва">
+  </div>
+
+  <button class="s-btn primary" onclick="saveProfileData()">Сохранить</button>
+  <button class="s-btn" onclick="goBack()">Отмена</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-week
+══════════════════════════════════════════════ -->
+<div id="screen-week" class="screen">
+  <div class="week-header">
+    <div class="w-logo">✦ Stellar</div>
+    <div id="w-natal-wrap" style="display:none">
+      <div class="w-natal">☀︎ <span id="w-natal-sign"></span></div>
+    </div>
+    <div class="w-prompt">Какая из карт<br>откликается тебе прямо сейчас?</div>
+    <div class="w-sub" style="margin-top:.6rem">выбери одну — и получи прогноз на неделю</div>
+  </div>
+
+  <div class="cards-grid" id="cardsGrid">
+    <div class="mood-card" data-id="calm" data-color="#7ba7c2" onclick="selectCard(this)">
+      <div class="card-art"><svg width="100%" height="100%" viewBox="0 0 120 180"><rect width="120" height="180" fill="#0d1820"/><circle cx="60" cy="75" r="32" fill="none" stroke="#7ba7c2" stroke-width=".6" opacity=".6"/><circle cx="60" cy="75" r="22" fill="none" stroke="#7ba7c2" stroke-width=".5" opacity=".45"/><circle cx="60" cy="75" r="12" fill="#7ba7c2" opacity=".15"/><circle cx="60" cy="75" r="4" fill="#7ba7c2" opacity=".6"/><line x1="60" y1="30" x2="60" y2="43" stroke="#7ba7c2" stroke-width=".5" opacity=".3"/><line x1="60" y1="107" x2="60" y2="120" stroke="#7ba7c2" stroke-width=".5" opacity=".3"/><line x1="15" y1="75" x2="28" y2="75" stroke="#7ba7c2" stroke-width=".5" opacity=".3"/><line x1="92" y1="75" x2="105" y2="75" stroke="#7ba7c2" stroke-width=".5" opacity=".3"/></svg></div>
+      <div class="card-label"><div class="card-name">Покой</div><div class="card-sub">тишина внутри</div></div>
+    </div>
+    <div class="mood-card" data-id="energy" data-color="#d4845a" onclick="selectCard(this)">
+      <div class="card-art"><svg width="100%" height="100%" viewBox="0 0 120 180"><rect width="120" height="180" fill="#1a0f08"/><polygon points="60,18 80,55 72,55 85,90 65,90 78,130 60,130 42,130 55,90 35,90 48,55 40,55" fill="#d4845a" opacity=".7"/><polygon points="60,28 76,58 70,58 80,88 63,88 74,120 60,120 46,120 57,88 40,88 50,58 44,58" fill="#e8a87a" opacity=".3"/></svg></div>
+      <div class="card-label"><div class="card-name">Энергия</div><div class="card-sub">огонь в движении</div></div>
+    </div>
+    <div class="mood-card" data-id="melancholy" data-color="#8b7fa8" onclick="selectCard(this)">
+      <div class="card-art"><svg width="100%" height="100%" viewBox="0 0 120 180"><rect width="120" height="180" fill="#100e18"/><path d="M20,40 Q60,20 100,40 Q80,80 60,160 Q40,80 20,40Z" fill="#8b7fa8" opacity=".12"/><path d="M60,25 Q60,25 60,160" stroke="#8b7fa8" stroke-width=".4" fill="none" opacity=".3" stroke-dasharray="2 4"/><circle cx="60" cy="50" r="2" fill="#8b7fa8" opacity=".5"/><circle cx="48" cy="75" r="1.5" fill="#8b7fa8" opacity=".4"/><circle cx="72" cy="95" r="1.5" fill="#8b7fa8" opacity=".4"/></svg></div>
+      <div class="card-label"><div class="card-name">Грусть</div><div class="card-sub">мягкая печаль</div></div>
+    </div>
+    <div class="mood-card" data-id="joy" data-color="#c9b46a" onclick="selectCard(this)">
+      <div class="card-art"><svg width="100%" height="100%" viewBox="0 0 120 180"><rect width="120" height="180" fill="#151005"/><circle cx="60" cy="78" r="28" fill="#c9b46a" opacity=".18"/><circle cx="60" cy="78" r="18" fill="#c9b46a" opacity=".25"/><circle cx="60" cy="78" r="9" fill="#c9b46a" opacity=".55"/><line x1="60" y1="30" x2="60" y2="42" stroke="#c9b46a" stroke-width=".8" opacity=".5"/><line x1="60" y1="114" x2="60" y2="126" stroke="#c9b46a" stroke-width=".8" opacity=".5"/><line x1="12" y1="78" x2="24" y2="78" stroke="#c9b46a" stroke-width=".8" opacity=".5"/><line x1="96" y1="78" x2="108" y2="78" stroke="#c9b46a" stroke-width=".8" opacity=".5"/></svg></div>
+      <div class="card-label"><div class="card-name">Радость</div><div class="card-sub">свет изнутри</div></div>
+    </div>
+    <div class="mood-card" data-id="tension" data-color="#7a9e8e" onclick="selectCard(this)">
+      <div class="card-art"><svg width="100%" height="100%" viewBox="0 0 120 180"><rect width="120" height="180" fill="#080f0d"/><path d="M20,60 L40,55 L35,70 L55,62 L50,78 L70,70 L65,85 L85,78 L80,93 L100,88" stroke="#7a9e8e" stroke-width=".7" fill="none" opacity=".5"/><path d="M20,75 L40,70 L35,85 L55,77 L50,93 L70,85 L65,100 L85,93 L80,108 L100,103" stroke="#7a9e8e" stroke-width=".5" fill="none" opacity=".3"/></svg></div>
+      <div class="card-label"><div class="card-name">Тревога</div><div class="card-sub">волнение внутри</div></div>
+    </div>
+    <div class="mood-card" data-id="flow" data-color="#a0b89a" onclick="selectCard(this)">
+      <div class="card-art"><svg width="100%" height="100%" viewBox="0 0 120 180"><rect width="120" height="180" fill="#0a120a"/><path d="M20,45 Q60,35 100,55 Q60,75 20,65 Q60,85 100,95 Q60,105 20,115 Q60,125 100,135" stroke="#a0b89a" stroke-width=".7" fill="none" opacity=".5"/><circle cx="60" cy="85" r="3" fill="#a0b89a" opacity=".4"/></svg></div>
+      <div class="card-label"><div class="card-name">Поток</div><div class="card-sub">всё идёт само</div></div>
+    </div>
+  </div>
+
+  <div class="w-loading" id="w-loading"><div class="w-load-text">Stellar читает неделю…</div></div>
+  <div class="w-result" id="w-result">
+    <div class="w-result-header">
+      <div class="mood-dot" id="moodDot"></div>
+      <div class="w-result-label" id="resultLabel"></div>
+    </div>
+    <div class="moon-badge" id="moonBadge"></div>
+    <div class="forecast-text" id="forecastText"></div>
+    <button class="reset-btn" onclick="resetForecast()">← выбрать другую карту</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-portrait-form
+══════════════════════════════════════════════ -->
+<div id="screen-portrait-form" class="screen">
+  <div class="screen-title">Новый портрет</div>
+
+  <div class="s-field">
+    <label>Имя</label>
+    <input type="text" id="pf-name" placeholder="Твоё имя">
+  </div>
+
+  <div class="s-field">
+    <label>Пол</label>
+    <div class="gender-row">
+      <button class="gender-btn" id="pf-gbm" onclick="pfSelGender('male')">Мужской</button>
+      <button class="gender-btn" id="pf-gbf" onclick="pfSelGender('female')">Женский</button>
+    </div>
+  </div>
+
+  <div class="s-field">
+    <label>Дата рождения</label>
+    <div class="date-row">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">День</div>
+        <input type="text" id="pf-day" placeholder="28" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Месяц</div>
+        <input type="text" id="pf-month" placeholder="4" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Год</div>
+        <input type="text" id="pf-year" placeholder="1990" maxlength="4" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+
+  <button class="s-btn primary" onclick="startPortrait()">Создать портрет</button>
+  <button class="s-btn" onclick="goHome()">Отмена</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-portrait-loading
+══════════════════════════════════════════════ -->
+<div id="screen-portrait-loading" class="screen">
+  <div class="tarot-loading">
+    <div class="tarot-cards-row">
+      <div class="tc"><div class="tc-inner" id="tc0"><div class="tc-face tc-back"><svg width="26" height="26" viewBox="0 0 30 30"><path d="M15 3 L16.5 13 L22 8 L19 14 L27 10 L21 15 L27 20 L19 16 L22 22 L16.5 17 L15 27 L13.5 17 L8 22 L11 16 L3 20 L9 15 L3 10 L11 14 L8 8 L13.5 13 Z" fill="none" stroke="#9b8fcf" stroke-width="1" opacity=".5"/></svg></div><div class="tc-face tc-front"><img src="" alt=""></div></div></div>
+      <div class="tc"><div class="tc-inner" id="tc1"><div class="tc-face tc-back"><svg width="26" height="26" viewBox="0 0 30 30"><path d="M15 3 L16.5 13 L22 8 L19 14 L27 10 L21 15 L27 20 L19 16 L22 22 L16.5 17 L15 27 L13.5 17 L8 22 L11 16 L3 20 L9 15 L3 10 L11 14 L8 8 L13.5 13 Z" fill="none" stroke="#9b8fcf" stroke-width="1" opacity=".5"/></svg></div><div class="tc-face tc-front"><img src="" alt=""></div></div></div>
+      <div class="tc"><div class="tc-inner" id="tc2"><div class="tc-face tc-back"><svg width="26" height="26" viewBox="0 0 30 30"><path d="M15 3 L16.5 13 L22 8 L19 14 L27 10 L21 15 L27 20 L19 16 L22 22 L16.5 17 L15 27 L13.5 17 L8 22 L11 16 L3 20 L9 15 L3 10 L11 14 L8 8 L13.5 13 Z" fill="none" stroke="#9b8fcf" stroke-width="1" opacity=".5"/></svg></div><div class="tc-face tc-front"><img src="" alt=""></div></div></div>
+    </div>
+    <div class="tc-load-text">Stellar читает карты…</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-portrait-result
+══════════════════════════════════════════════ -->
+<div id="screen-portrait-result" class="screen">
+  <div class="screen-title">Твой портрет</div>
+  <div class="portrait-box" id="p-result-text"></div>
+  <div id="p-save-wrap"></div>
+  <div id="p-save-notice" class="save-notice" style="display:none">✦ Портрет сохранён</div>
+  <button class="s-btn primary" onclick="goToNewPortrait()">Создать новый портрет</button>
+  <button class="s-btn" id="p-my-portraits-btn" style="display:none" onclick="showMyPortraits()">Мои портреты</button>
+  <button class="s-btn" onclick="goHome()">На главную</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-my-portraits
+══════════════════════════════════════════════ -->
+<div id="screen-my-portraits" class="screen">
+  <div class="screen-title">Мои портреты</div>
+  <div id="portraits-list-inner"></div>
+  <button class="s-btn" style="margin-top:.5rem" onclick="goHome()">На главную</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-day-portrait
+══════════════════════════════════════════════ -->
+<div id="screen-day-portrait" class="screen">
+  <div class="screen-title">Портрет дня</div>
+  <div id="dp-date-badge" style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:1.2rem;letter-spacing:.06em"></div>
+  <div class="portrait-box" id="dp-result-text"></div>
+  <button class="s-btn" onclick="goHome()">На главную</button>
+  <button class="s-btn" style="border-color:rgba(255,255,255,0.1);color:var(--muted);font-size:11px;margin-top:.2rem" onclick="refreshDayPortrait()">↺ Пересоздать портрет дня</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-day-portrait-loading
+══════════════════════════════════════════════ -->
+<div id="screen-day-portrait-loading" class="screen">
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4rem 1.5rem 2rem">
+
+    <!-- Sky arc animation -->
+    <svg id="dp-sky" viewBox="0 0 280 150" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-width:320px;overflow:visible;margin-bottom:2rem">
+
+      <!-- Horizon line -->
+      <line x1="10" y1="132" x2="270" y2="132" stroke="rgba(232,230,240,0.1)" stroke-width="1"/>
+
+      <!-- Arc path (dashed guide, very subtle) -->
+      <path d="M 20 132 A 120 120 0 0 1 260 132" fill="none"
+            stroke="rgba(232,230,240,0.05)" stroke-width="1" stroke-dasharray="3 6"/>
+
+      <!-- Stars (static, faint) -->
+      <circle cx="60"  cy="30" r="1"   fill="rgba(232,230,240,0.3)"/>
+      <circle cx="140" cy="15" r="1.2" fill="rgba(232,230,240,0.25)"/>
+      <circle cx="220" cy="40" r="0.9" fill="rgba(232,230,240,0.2)"/>
+      <circle cx="90"  cy="55" r="0.8" fill="rgba(232,230,240,0.15)"/>
+      <circle cx="195" cy="20" r="1"   fill="rgba(232,230,240,0.2)"/>
+
+      <!-- SUN group — travels left to right along arc -->
+      <g id="dp-sun">
+        <!-- Glow -->
+        <circle cx="0" cy="0" r="18" fill="rgba(212,160,60,0.12)"/>
+        <!-- Body -->
+        <circle cx="0" cy="0" r="10" fill="#e8b84b" opacity="0.9"/>
+        <!-- Rays -->
+        <g stroke="#e8b84b" stroke-width="1.2" opacity="0.6">
+          <line x1="0" y1="-14" x2="0" y2="-18"/>
+          <line x1="0" y1="14"  x2="0" y2="18"/>
+          <line x1="-14" y1="0" x2="-18" y2="0"/>
+          <line x1="14"  y1="0" x2="18"  y2="0"/>
+          <line x1="-10" y1="-10" x2="-13" y2="-13"/>
+          <line x1="10"  y1="-10" x2="13"  y2="-13"/>
+          <line x1="-10" y1="10"  x2="-13" y2="13"/>
+          <line x1="10"  y1="10"  x2="13"  y2="13"/>
+        </g>
+      </g>
+
+      <!-- MOON group — travels right to left along arc, offset phase -->
+      <g id="dp-moon">
+        <!-- Glow -->
+        <circle cx="0" cy="0" r="16" fill="rgba(155,143,207,0.12)"/>
+        <!-- Body (crescent via clip) -->
+        <circle cx="0" cy="0" r="9" fill="#c8bfee" opacity="0.85"/>
+        <circle cx="4" cy="-2" r="7" fill="#0e0e14"/>
+      </g>
+
+    </svg>
+
+    <div class="tc-load-text">Формируем портрет дня…</div>
+  </div>
+</div>
+
+<style>
+/*
+  Arc: centre (140,132) radius 120
+  East θ=0°:(260,132) → Zenith θ=90°:(140,12) → West θ=180°:(20,132)
+  Cycle: 16s total. Sun 0→50% (8s), Moon 50→100% (8s). linear easing.
+*/
+@keyframes dp-sun-move {
+  0%    { transform:translate(260.0px,132.0px); opacity:0; }
+  1%    { opacity:1; }
+  4.2%  { transform:translate(255.9px,100.9px); }
+  8.3%  { transform:translate(243.9px, 72.0px); }
+  12.5% { transform:translate(224.9px, 47.1px); }
+  16.7% { transform:translate(200.0px, 28.1px); }
+  20.8% { transform:translate(171.1px, 16.1px); }
+  25.0% { transform:translate(140.0px, 12.0px); }
+  29.2% { transform:translate(108.9px, 16.1px); }
+  33.3% { transform:translate( 80.0px, 28.1px); }
+  37.5% { transform:translate( 55.1px, 47.1px); }
+  41.7% { transform:translate( 36.1px, 72.0px); }
+  45.8% { transform:translate( 24.1px,100.9px); }
+  49%   { transform:translate( 20.0px,132.0px); opacity:1; }
+  50%   { transform:translate( 20.0px,132.0px); opacity:0; }
+  100%  { transform:translate( 20.0px,132.0px); opacity:0; }
+}
+
+@keyframes dp-moon-move {
+  0%    { transform:translate(260.0px,132.0px); opacity:0; }
+  50%   { transform:translate(260.0px,132.0px); opacity:0; }
+  51%   { opacity:1; }
+  54.2% { transform:translate(255.9px,100.9px); }
+  58.3% { transform:translate(243.9px, 72.0px); }
+  62.5% { transform:translate(224.9px, 47.1px); }
+  66.7% { transform:translate(200.0px, 28.1px); }
+  70.8% { transform:translate(171.1px, 16.1px); }
+  75.0% { transform:translate(140.0px, 12.0px); }
+  79.2% { transform:translate(108.9px, 16.1px); }
+  83.3% { transform:translate( 80.0px, 28.1px); }
+  87.5% { transform:translate( 55.1px, 47.1px); }
+  91.7% { transform:translate( 36.1px, 72.0px); }
+  95.8% { transform:translate( 24.1px,100.9px); }
+  99%   { transform:translate( 20.0px,132.0px); opacity:1; }
+  100%  { transform:translate( 20.0px,132.0px); opacity:0; }
+}
+
+@keyframes dp-ray-spin {
+  from { transform:rotate(0deg); }
+  to   { transform:rotate(360deg); }
+}
+
+#dp-sun {
+  animation: dp-sun-move 14s linear infinite;
+  transform-origin: 0 0;
+}
+#dp-sun g {
+  animation: dp-ray-spin 7s linear infinite;
+  transform-origin: 0 0;
+}
+#dp-moon {
+  animation: dp-moon-move 14s linear infinite;
+  transform-origin: 0 0;
+}
+</style>
+
+
+<!-- ══════════════════════════════════════════════
+  screen-schema-form
+══════════════════════════════════════════════ -->
+<div id="screen-schema-form" class="screen">
+  <div class="screen-title">Расчёт позиций</div>
+
+  <div class="s-field">
+    <label>Имя</label>
+    <input type="text" id="sc-name" placeholder="Имя">
+  </div>
+  <div class="s-field">
+    <label>Дата рождения</label>
+    <div class="date-row">
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">День</div>
+        <input type="text" id="sc-day" placeholder="28" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Месяц</div>
+        <input type="text" id="sc-month" placeholder="6" maxlength="2" inputmode="numeric">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Год</div>
+        <input type="text" id="sc-year" placeholder="1990" maxlength="4" inputmode="numeric">
+      </div>
+    </div>
+  </div>
+  <button class="s-btn primary" onclick="scCalculate()">Построить схему</button>
+  <button class="s-btn" onclick="goHome()">Отмена</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-schema-result
+══════════════════════════════════════════════ -->
+<div id="screen-schema-result" class="screen">
+  <div class="screen-title" id="sc-diagram-title"></div>
+  <div id="sc-diagram-sub" style="font-size:13px;color:var(--muted);text-align:center;margin-bottom:1.5rem;letter-spacing:.04em"></div>
+  <div id="sc-svg-wrap" style="width:100%"></div>
+  <div id="sc-legend" class="sc-legend"></div>
+  <button class="s-btn" style="margin-top:1.2rem" onclick="scReset()">← Новый расчёт</button>
+  <button class="s-btn" onclick="goHome()">На главную</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-compat-form
+══════════════════════════════════════════════ -->
+<div id="screen-compat-form" class="screen">
+  <div class="screen-title">Совместимость</div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-bottom:1rem">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem">Первый партнёр</div>
+    <div class="s-field">
+      <label>Имя</label>
+      <input type="text" id="cp-name1" placeholder="Имя">
+    </div>
+    <div class="s-field" style="margin-bottom:0">
+      <label>Дата рождения</label>
+      <div class="date-row">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">День</div>
+          <input type="text" id="cp-day1" placeholder="28" maxlength="2" inputmode="numeric">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Месяц</div>
+          <input type="text" id="cp-month1" placeholder="6" maxlength="2" inputmode="numeric">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Год</div>
+          <input type="text" id="cp-year1" placeholder="1990" maxlength="4" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-bottom:1.2rem">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:1rem">Второй партнёр</div>
+    <div class="s-field">
+      <label>Имя</label>
+      <input type="text" id="cp-name2" placeholder="Имя">
+    </div>
+    <div class="s-field" style="margin-bottom:0">
+      <label>Дата рождения</label>
+      <div class="date-row">
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">День</div>
+          <input type="text" id="cp-day2" placeholder="14" maxlength="2" inputmode="numeric">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Месяц</div>
+          <input type="text" id="cp-month2" placeholder="3" maxlength="2" inputmode="numeric">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.08em">Год</div>
+          <input type="text" id="cp-year2" placeholder="1988" maxlength="4" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Relation type -->
+  <div style="margin-bottom:1.2rem">
+    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.7rem">Тип отношений</div>
+    <div style="display:flex;gap:8px">
+      <button class="cp-rel-btn active" id="cp-rel-friendship" onclick="cpSelRel('friendship',this)">Дружба</button>
+      <button class="cp-rel-btn" id="cp-rel-partnership" onclick="cpSelRel('partnership',this)">Партнёрство</button>
+      <button class="cp-rel-btn" id="cp-rel-love" onclick="cpSelRel('love',this)">Любовь</button>
+    </div>
+  </div>
+
+  <button class="s-btn primary" onclick="cpCalculate()">Рассчитать совместимость</button>
+  <button class="s-btn" onclick="goHome()">Отмена</button>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-compat-loading
+══════════════════════════════════════════════ -->
+<div id="screen-compat-loading" class="screen">
+  <div class="tarot-loading" style="padding-top:6rem">
+    <div style="font-size:32px;margin-bottom:1.5rem;letter-spacing:-.1em;opacity:.7">◈</div>
+    <div class="tc-load-text">Строим партнёрский портрет…</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+  screen-compat-result
+══════════════════════════════════════════════ -->
+<div id="screen-compat-result" class="screen">
+  <div class="screen-title">Совместимость</div>
+  <div id="cp-names-badge" style="text-align:center;font-size:14px;color:var(--muted);margin-bottom:1.5rem;letter-spacing:.04em"></div>
+  <div class="portrait-box" id="cp-result-text"></div>
+  <button class="s-btn primary" onclick="showScreen('screen-compat-form')">Новый расчёт</button>
+  <button class="s-btn" onclick="goHome()">На главную</button>
+</div>
+
+<!-- ── FIREBASE ── -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, collection, addDoc, deleteDoc, doc, query, where, getDocs, orderBy, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const app = initializeApp({
+  apiKey:"AIzaSyBu0EZflwyouEZgBbCwkaKv-1t5YGqa5Uo",
+  authDomain:"stellar-8d643.firebaseapp.com",
+  projectId:"stellar-8d643",
+  storageBucket:"stellar-8d643.firebasestorage.app",
+  messagingSenderId:"1045252182816",
+  appId:"1:1045252182816:web:6437fa564e3c00ae82bd45"
+});
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+window._fbAuth = auth;
+window._fbDb   = db;
+window._fb = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, deleteDoc, doc, query, where, getDocs, orderBy, Timestamp };
+
+onAuthStateChanged(auth, (user) => {
+  window._appState.firebaseUser = user;
+  window._onAuthChange(user);
+});
+</script>
+
+
+<!-- ── MAIN APP ── -->
+<script>
+// ═══════════════ STATE ═══════════════
+window._appState = {
+  firebaseUser: null,
+  isGuest: false,
+  profile: null,       // loaded from localStorage
+  portraitData: { name:'', gender:'male', day:0, month:0, year:0 },
+  portraitText: '',
+  portraitSaved: false,
+  cardAnimTimeouts: [],
+  screenStack: []
+};
+
+const PROFILE_KEY = 'stellar_profile_v1';
+const MAX_PORTRAITS = 3;
+
+// ═══════════════ NAVIGATION ═══════════════
+function showScreen(id, pushStack) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if (pushStack !== false) window._appState.screenStack.push(id);
+  // Show/hide back button — not shown on home/auth
+  const noBack = ['screen-auth','screen-home'];
+  const back = document.getElementById('topbar-back');
+  back.classList.toggle('vis', !noBack.includes(id));
+}
+window.showScreen = showScreen;
+
+function goHome() {
+  window._appState.screenStack = [];
+  renderHomeTile();
+  showScreen('screen-home', false);
+}
+window.goHome = goHome;
+
+function goBack() {
+  const stack = window._appState.screenStack;
+  stack.pop(); // remove current
+  const prev = stack.length ? stack[stack.length-1] : 'screen-home';
+  window._appState.screenStack = stack;
+  showScreen(prev, false);
+  if (prev === 'screen-home') {
+    renderHomeTile();
+    document.getElementById('topbar-back').classList.remove('vis');
+  }
+}
+window.goBack = goBack;
+
+function goToProfile() {
+  renderProfileScreen();
+  showScreen('screen-profile');
+}
+window.goToProfile = goToProfile;
+
+function goToWeek() {
+  resetForecast();
+  updateNatalBadge();
+  showScreen('screen-week');
+}
+window.goToWeek = goToWeek;
+
+function goToNewPortrait() {
+  // Pre-fill from profile if available
+  const prof = window._appState.profile;
+  if (prof) {
+    document.getElementById('pf-name').value = prof.name || '';
+    document.getElementById('pf-day').value  = prof.day  || '';
+    document.getElementById('pf-month').value = prof.month || '';
+    document.getElementById('pf-year').value  = prof.year  || '';
+    pfSelGender(prof.gender || 'male');
+  }
+  showScreen('screen-portrait-form');
+}
+window.goToNewPortrait = goToNewPortrait;
+
+// ═══════════════ AUTH ═══════════════
+window._onAuthChange = function(user) {
+  const formWrap = document.getElementById('auth-form-wrap');
+  const infoWrap = document.getElementById('user-info-wrap');
+  if (user) {
+    formWrap.style.display = 'none';
+    infoWrap.style.display = 'block';
+    document.getElementById('u-email').textContent = user.email;
+    // Auto-go home if on auth screen
+    const cur = document.querySelector('.screen.active');
+    if (cur && cur.id === 'screen-auth') goHome();
+  } else {
+    formWrap.style.display = 'block';
+    infoWrap.style.display = 'none';
+  }
+};
+
+async function doLogin() {
+  const e = document.getElementById('p-email').value;
+  const p = document.getElementById('p-pass').value;
+  if (!e || !p) return alert('Введи email и пароль');
+  try { await window._fb.signInWithEmailAndPassword(window._fbAuth, e, p); }
+  catch(err) { alert('Ошибка входа: ' + err.message); }
+}
+window.doLogin = doLogin;
+
+async function doRegister() {
+  const e = document.getElementById('p-email').value;
+  const p = document.getElementById('p-pass').value;
+  if (!e || !p) return alert('Введи email и пароль');
+  if (p.length < 6) return alert('Пароль минимум 6 символов');
+  try { await window._fb.createUserWithEmailAndPassword(window._fbAuth, e, p); }
+  catch(err) { alert('Ошибка регистрации: ' + err.message); }
+}
+window.doRegister = doRegister;
+
+async function doLogout() {
+  try {
+    await window._fb.signOut(window._fbAuth);
+    window._appState.isGuest = false;
+    window._appState.screenStack = [];
+    showScreen('screen-auth', false);
+  }
+  catch(err) { alert(err.message); }
+}
+window.doLogout = doLogout;
+
+function doSkip() {
+  window._appState.isGuest = true;
+  goHome();
+}
+window.doSkip = doSkip;
+
+// ═══════════════ PROFILE DATA ═══════════════
+function loadProfile() {
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    window._appState.profile = raw ? JSON.parse(raw) : null;
+  } catch { window._appState.profile = null; }
+}
+
+function saveProfileData() {
+  const name    = document.getElementById('pe-name').value.trim();
+  const day     = parseInt(document.getElementById('pe-day').value);
+  const month   = parseInt(document.getElementById('pe-month').value);
+  const year    = parseInt(document.getElementById('pe-year').value);
+  const hour    = document.getElementById('pe-hour').value.trim();
+  const min     = document.getElementById('pe-min').value.trim();
+  const utc     = document.getElementById('pe-utc').value.trim();
+  const country = document.getElementById('pe-country').value.trim();
+  const city    = document.getElementById('pe-city').value.trim();
+  const gender  = window._appState._peGender || 'male';
+
+  if (!name) return alert('Введи имя');
+  if (!day || !month || !year) return alert('Введи дату рождения');
+  if (day<1||day>31||month<1||month>12||year<1900||year>2025) return alert('Проверь дату');
+
+  const prof = { name, gender, day, month, year,
+    hour: hour ? parseInt(hour) : null,
+    min:  min  ? parseInt(min)  : null,
+    utc:  utc  ? parseFloat(utc) : null,
+    country, city
+  };
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(prof));
+  window._appState.profile = prof;
+
+  renderProfileScreen();
+  renderHomeTile();
+  showScreen('screen-profile');
+}
+window.saveProfileData = saveProfileData;
+
+function peSelGender(g) {
+  window._appState._peGender = g;
+  document.getElementById('pe-gbm').classList.toggle('sel', g==='male');
+  document.getElementById('pe-gbf').classList.toggle('sel', g==='female');
+}
+window.peSelGender = peSelGender;
+
+function openProfileEdit() {
+  const p = window._appState.profile;
+  if (p) {
+    document.getElementById('pe-name').value    = p.name   || '';
+    document.getElementById('pe-day').value     = p.day    || '';
+    document.getElementById('pe-month').value   = p.month  || '';
+    document.getElementById('pe-year').value    = p.year   || '';
+    document.getElementById('pe-hour').value    = p.hour != null ? p.hour : '';
+    document.getElementById('pe-min').value     = p.min  != null ? p.min  : '';
+    document.getElementById('pe-utc').value     = p.utc  != null ? p.utc  : '';
+    document.getElementById('pe-country').value = p.country || '';
+    document.getElementById('pe-city').value    = p.city    || '';
+    peSelGender(p.gender || 'male');
+  } else {
+    peSelGender('male');
+  }
+  showScreen('screen-profile-edit');
+}
+window.openProfileEdit = openProfileEdit;
+
+// ═══════════════ ASTRO CALCULATIONS ═══════════════
+function getSolarSign(d, m) {
+  if ((m===3&&d>=21)||(m===4&&d<=19)) return {sign:'Овен',glyph:'♈'};
+  if ((m===4&&d>=20)||(m===5&&d<=20)) return {sign:'Телец',glyph:'♉'};
+  if ((m===5&&d>=21)||(m===6&&d<=20)) return {sign:'Близнецы',glyph:'♊'};
+  if ((m===6&&d>=21)||(m===7&&d<=22)) return {sign:'Рак',glyph:'♋'};
+  if ((m===7&&d>=23)||(m===8&&d<=22)) return {sign:'Лев',glyph:'♌'};
+  if ((m===8&&d>=23)||(m===9&&d<=22)) return {sign:'Дева',glyph:'♍'};
+  if ((m===9&&d>=23)||(m===10&&d<=22)) return {sign:'Весы',glyph:'♎'};
+  if ((m===10&&d>=23)||(m===11&&d<=21)) return {sign:'Скорпион',glyph:'♏'};
+  if ((m===11&&d>=22)||(m===12&&d<=21)) return {sign:'Стрелец',glyph:'♐'};
+  if ((m===12&&d>=22)||(m===1&&d<=19)) return {sign:'Козерог',glyph:'♑'};
+  if ((m===1&&d>=20)||(m===2&&d<=18)) return {sign:'Водолей',glyph:'♒'};
+  return {sign:'Рыбы',glyph:'♓'};
+}
+
+function getMoonAtDate(year, month, day) {
+  const date = new Date(year, month-1, day, 12, 0, 0);
+  const J2000 = new Date('2000-01-01T12:00:00Z');
+  const days  = (date - J2000) / 86400000;
+  const lon   = ((218.316 + 13.176396 * days) % 360 + 360) % 360;
+  const signs = ['Овен','Телец','Близнецы','Рак','Лев','Дева','Весы','Скорпион','Стрелец','Козерог','Водолей','Рыбы'];
+  const glyphs= ['♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓'];
+  const idx   = Math.floor(lon / 30);
+
+  const knownNew = new Date('2000-01-06T18:14:00Z');
+  const cyclePos = (((date - knownNew) / 86400000) % 29.53058867 + 29.53058867) % 29.53058867;
+  const phase    = cyclePos / 29.53058867;
+
+  let phaseName, phaseEmoji;
+  if      (phase < 0.035) { phaseName='Новолуние';          phaseEmoji='🌑'; }
+  else if (phase < 0.25)  { phaseName='Растущий серп';      phaseEmoji='🌒'; }
+  else if (phase < 0.285) { phaseName='Первая четверть';    phaseEmoji='🌓'; }
+  else if (phase < 0.465) { phaseName='Растущая луна';      phaseEmoji='🌔'; }
+  else if (phase < 0.535) { phaseName='Полнолуние';         phaseEmoji='🌕'; }
+  else if (phase < 0.715) { phaseName='Убывающая луна';     phaseEmoji='🌖'; }
+  else if (phase < 0.785) { phaseName='Последняя четверть'; phaseEmoji='🌗'; }
+  else if (phase < 0.965) { phaseName='Убывающий серп';     phaseEmoji='🌘'; }
+  else                    { phaseName='Новолуние';           phaseEmoji='🌑'; }
+
+  return {
+    sign: signs[idx], glyph: glyphs[idx],
+    phaseName, phaseEmoji,
+    cycleDay: Math.round(cyclePos)
+  };
+}
+
+// Simplified Ascendant calculation
+const CITY_COORDS = {
+  'москва':[55.75,37.62],'санкт-петербург':[59.93,30.32],'спб':[59.93,30.32],
+  'новосибирск':[55.03,82.92],'екатеринбург':[56.85,60.61],'казань':[55.78,49.12],
+  'нижний новгород':[56.33,44.00],'самара':[53.20,50.15],'омск':[54.97,73.37],
+  'ростов-на-дону':[47.22,39.72],'уфа':[54.73,55.96],'краснодар':[45.04,38.98],
+  'воронеж':[51.67,39.19],'волгоград':[48.71,44.51],'пермь':[58.00,56.32],
+  'красноярск':[56.01,92.87],'владивосток':[43.13,131.91],'ижевск':[56.84,53.21],
+  'барнаул':[53.35,83.75],'хабаровск':[48.48,135.08],'тюмень':[57.15,68.99],
+  'владикавказ':[43.04,44.68],'ставрополь':[45.04,41.97],'мурманск':[68.96,33.08],
+  'киев':[50.45,30.52],'харьков':[49.99,36.23],'одесса':[46.48,30.73],
+  'минск':[53.91,27.55],'алматы':[43.25,76.95],'баку':[40.41,49.87],
+  'ереван':[40.18,44.51],'тбилиси':[41.69,44.83],'ташкент':[41.30,69.25],
+  'бишкек':[42.87,74.59],'душанбе':[38.56,68.77],'ашхабад':[37.95,58.38],
+  'берлин':[52.52,13.40],'лондон':[51.51,-0.13],'париж':[48.85,2.35],
+  'рим':[41.90,12.50],'мадрид':[40.42,-3.70],'варшава':[52.23,21.01],
+  'прага':[50.08,14.43],'вена':[48.21,16.37],'стокгольм':[59.33,18.07],
+  'amsterdam':[52.37,4.90],'amsterdam':[52.37,4.90]
+};
+
+function calcAscendant(year, month, day, hour, min, utcOffset, lat, lon) {
+  // Julian date at birth (UTC)
+  const hourUTC = hour - utcOffset + min/60;
+  const a = Math.floor((14 - month) / 12);
+  const y = year + 4800 - a;
+  const m = month + 12*a - 3;
+  const JD = day + Math.floor((153*m+2)/5) + 365*y + Math.floor(y/4) - Math.floor(y/100) + Math.floor(y/400) - 32045 + (hourUTC - 12)/24;
+
+  const T = (JD - 2451545.0) / 36525;
+  const GMST = ((280.46061837 + 360.98564736629*(JD-2451545) + 0.000387933*T*T) % 360 + 360) % 360;
+  const LST  = ((GMST + lon) % 360 + 360) % 360;
+  const eps  = (23.4393 - 0.0130042*T) * Math.PI / 180;
+  const L    = LST * Math.PI / 180;
+  const latR = lat * Math.PI / 180;
+
+  const y2 = -Math.cos(L);
+  const x2 =  Math.sin(L) * Math.cos(eps) + Math.tan(latR) * Math.sin(eps);
+  let asc = Math.atan2(y2, x2) * 180 / Math.PI;
+  if (asc < 0) asc += 360;
+  return asc; // ecliptic longitude
+}
+
+function lonToSign(lon) {
+  const signs = [
+    {sign:'Овен',glyph:'♈'},{sign:'Телец',glyph:'♉'},{sign:'Близнецы',glyph:'♊'},
+    {sign:'Рак',glyph:'♋'},{sign:'Лев',glyph:'♌'},{sign:'Дева',glyph:'♍'},
+    {sign:'Весы',glyph:'♎'},{sign:'Скорпион',glyph:'♏'},{sign:'Стрелец',glyph:'♐'},
+    {sign:'Козерог',glyph:'♑'},{sign:'Водолей',glyph:'♒'},{sign:'Рыбы',glyph:'♓'}
+  ];
+  return signs[Math.floor(((lon % 360) + 360) % 360 / 30)];
+}
+
+function getAscendantFromProfile(prof) {
+  if (!prof || prof.hour == null) return null;
+  const cityKey = (prof.city || '').toLowerCase().trim();
+  const coords = CITY_COORDS[cityKey];
+  if (!coords) return null;
+  const lon = calcAscendant(prof.year, prof.month, prof.day, prof.hour, prof.min || 0, prof.utc || 0, coords[0], coords[1]);
+  return lonToSign(lon);
+}
+
+function formatBirthLine(prof) {
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  let line = `${prof.day} ${months[prof.month-1]} ${prof.year} г.`;
+  if (prof.hour != null) {
+    line += ` в ${String(prof.hour).padStart(2,'0')}:${String(prof.min||0).padStart(2,'0')}`;
+    if (prof.utc != null) line += ` (UTC${prof.utc >= 0 ? '+' : ''}${prof.utc})`;
+  }
+  if (prof.city || prof.country) {
+    const loc = [prof.city, prof.country].filter(Boolean).join(', ');
+    line += `\n${loc}`;
+  }
+  return line;
+}
+
+// ═══════════════ RENDER PROFILE ═══════════════
+function renderHomeTile() {
+  const prof = window._appState.profile;
+  const tile  = document.getElementById('home-profile-tile');
+
+  if (!prof || !prof.name || !prof.day) {
+    const isGuest = window._appState.isGuest;
+    const text = isGuest
+      ? 'Зарегистрируйся и заполни профиль, чтобы видеть свои астрологические данные'
+      : 'Заполни профиль, чтобы видеть свои астрологические данные';
+    const btn = isGuest
+      ? `<button class="s-btn primary" style="max-width:240px;margin:0 auto" onclick="event.stopPropagation();doLogout()">Зарегистрироваться</button>`
+      : `<button class="s-btn primary" style="max-width:240px;margin:0 auto" onclick="event.stopPropagation();openProfileEdit()">Обновить данные профиля</button>`;
+    tile.innerHTML = `<div class="tile-profile-empty">
+      <div style="font-size:28px;margin-bottom:.6rem">👤</div>
+      <p>${text}</p>
+      ${btn}
+    </div>`;
+    return;
+  }
+
+  const solar = getSolarSign(prof.day, prof.month);
+  const moon  = getMoonAtDate(prof.year, prof.month, prof.day);
+  const asc   = getAscendantFromProfile(prof);
+
+  tile.innerHTML = `
+    <div class="tp-name">${prof.name}</div>
+    <div class="tp-date">${formatBirthLine(prof)}</div>
+    <div class="tp-moon-row">
+      <div class="tp-moon-icon">${moon.phaseEmoji}</div>
+      <div>
+        <div class="tp-moon-label">Луна дня рождения</div>
+        <div class="tp-moon-val">${moon.phaseName} ${(moon.cyclePos||moon.cycleDay)} день · ${moon.sign}</div>
+      </div>
+    </div>
+    <div class="tp-signs">
+      <div class="tp-sign-item">
+        <div class="tp-sign-glyph">${solar.glyph}</div>
+        <div class="tp-sign-name">${solar.sign}</div>
+        <div class="tp-sign-label">Солнечный знак</div>
+      </div>
+      <div class="tp-sign-item">
+        <div class="tp-sign-glyph">${moon.glyph}</div>
+        <div class="tp-sign-name">${moon.sign}</div>
+        <div class="tp-sign-label">Лунный знак</div>
+      </div>
+      ${asc ? `<div class="tp-sign-item">
+        <div class="tp-sign-glyph">${asc.glyph}</div>
+        <div class="tp-sign-name">${asc.sign}</div>
+        <div class="tp-sign-label">Асцендент</div>
+      </div>` : `<div class="tp-sign-item" style="opacity:.35;cursor:pointer" onclick="event.stopPropagation();openProfileEdit()" title="Добавь время и город рождения">
+        <div class="tp-sign-glyph" style="font-size:16px;color:var(--muted)">+</div>
+        <div class="tp-sign-name" style="font-size:12px;color:var(--muted)">Добавить</div>
+        <div class="tp-sign-label">Асцендент</div>
+      </div>`}
+    </div>`;
+}
+
+function renderProfileScreen() {
+  const prof = window._appState.profile;
+  const wrap = document.getElementById('profile-card-content');
+
+  // Logout wrap
+  const user = window._appState.firebaseUser;
+  const logWrap = document.getElementById('profile-logout-wrap');
+  if (user && !window._appState.isGuest) {
+    logWrap.innerHTML = `<div class="user-row" style="margin-top:.6rem">
+      <span><span class="user-label">Аккаунт:</span><span class="user-email">${user.email}</span></span>
+      <button class="s-btn danger" style="width:auto;padding:6px 14px;margin:0;font-size:11px" onclick="doLogout()">Выйти</button>
+    </div>`;
+  } else { logWrap.innerHTML = ''; }
+
+  if (!prof || !prof.name || !prof.day) {
+    wrap.innerHTML = `<div style="text-align:center;padding:2rem 0">
+      <p style="color:var(--muted);font-size:13px;margin-bottom:1rem">Данные профиля не заполнены</p>
+    </div>`;
+    return;
+  }
+
+  const solar = getSolarSign(prof.day, prof.month);
+  const moon  = getMoonAtDate(prof.year, prof.month, prof.day);
+  const asc   = getAscendantFromProfile(prof);
+
+  wrap.innerHTML = `<div class="profile-card">
+    <div class="pc-name">${prof.name}</div>
+    <div class="pc-birth">${formatBirthLine(prof)}</div>
+    <div class="pc-moon-row">
+      <div class="pc-moon-icon">${moon.phaseEmoji}</div>
+      <div class="pc-moon-info">
+        <div class="pc-moon-label">Луна дня рождения</div>
+        <div class="pc-moon-val">${moon.phaseName} ${moon.cycleDay} день · ${moon.sign}</div>
+      </div>
+    </div>
+    <div class="pc-signs">
+      <div class="pc-sign-item">
+        <div class="pc-sign-glyph">${solar.glyph}</div>
+        <div class="pc-sign-name">${solar.sign}</div>
+        <div class="pc-sign-label">Солнечный знак</div>
+      </div>
+      <div class="pc-sign-item">
+        <div class="pc-sign-glyph">${moon.glyph}</div>
+        <div class="pc-sign-name">${moon.sign}</div>
+        <div class="pc-sign-label">Лунный знак</div>
+      </div>
+      <div class="pc-sign-item">
+        ${asc
+          ? `<div class="pc-sign-glyph">${asc.glyph}</div><div class="pc-sign-name">${asc.sign}</div><div class="pc-sign-label">Асцендент</div>`
+          : `<div style="font-size:12px;color:var(--muted);text-align:center;padding-top:.3rem">Нужны время<br>и город рождения</div>`
+        }
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════ PORTRAIT ═══════════════
+const ARCANA = {
+  1:{n:'Маг',k:'воля, действие, начало'}, 2:{n:'Верховная Жрица',k:'интуиция, тайна, знание'},
+  3:{n:'Императрица',k:'плодородие, материнство, красота'}, 4:{n:'Император',k:'власть, структура, стабильность'},
+  5:{n:'Иерофант',k:'традиции, обучение, духовность'}, 6:{n:'Влюблённые',k:'выбор, любовь, гармония'},
+  7:{n:'Колесница',k:'победа, движение, контроль'}, 8:{n:'Справедливость',k:'баланс, правда, карма'},
+  9:{n:'Отшельник',k:'поиск, мудрость, одиночество'}, 10:{n:'Колесо Фортуны',k:'судьба, циклы, перемены'},
+  11:{n:'Сила',k:'храбрость, терпение, внутренняя сила'}, 12:{n:'Повешенный',k:'жертва, новый взгляд, ожидание'},
+  13:{n:'Смерть',k:'трансформация, конец, начало'}, 14:{n:'Умеренность',k:'баланс, гармония, исцеление'},
+  15:{n:'Дьявол',k:'искушение, зависимость, материализм'}, 16:{n:'Башня',k:'разрушение, откровение, освобождение'},
+  17:{n:'Звезда',k:'надежда, вдохновение, ясность'}, 18:{n:'Луна',k:'иллюзии, страхи, подсознание'},
+  19:{n:'Солнце',k:'радость, успех, ясность'}, 20:{n:'Суд',k:'пробуждение, прощение, возрождение'},
+  21:{n:'Мир',k:'завершение, целостность, достижение'}, 22:{n:'Шут',k:'начало, невинность, свобода'}
+};
+
+// ── Reduce to 1–22: subtract 22 while > 22, add 22 while ≤ 0
+function reduce(n) {
+  while (n > 22) n -= 22;
+  while (n <= 0)  n += 22;
+  return n;
+}
+
+// ── Reduce to 1–9 (numerological)
+function reduceNum(n) {
+  while (n > 9) { n = String(n).split('').reduce((a,c)=>a+parseInt(c),0); }
+  return n;
+}
+
+// ── Sum digits of a number
+function digitSum(n) {
+  return String(n).split('').reduce((a,c)=>a+parseInt(c),0);
+}
+
+function calcPortrait(d, m, y) {
+  const p = {};
+
+  // === БАЗОВЫЕ ===
+  p[1] = reduce(d);                          // день рождения
+  p[2] = reduce(m);                          // месяц рождения
+  p[3] = reduce(digitSum(y));                // сумма цифр года
+
+  // === ИНДИВИДУАЛЬНЫЙ ПОРТРЕТ ===
+  p[4]  = reduce(p[1] + p[2]);              // подсознание
+  p[5]  = reduce(p[2] + p[3]);              // сознание
+  p[6]  = reduce(p[4] + p[5]);              // сверхсознание
+  p['7a'] = reduce(p[1] + p[5]);            // миссия
+  p['7b'] = reduce(p[3] + p[4]);            // лжемиссия
+  p[8]  = reduce(p[2] + p[6]);              // дары
+  p[12] = reduce(p[4] + p[5] + p[6]);       // психологическая гармония
+  p[13] = reduce(p[1] + p[4] + p[6]);       // как видит себя
+  p[14] = reduce(p[3] + p[5] + p[6]);       // как видят другие
+
+  // === КАРМИЧЕСКИЙ ПОРТРЕТ ===
+  p[9]  = reduce(p[1] - p[2]);              // кем был
+  p[10] = reduce(p[2] - p[3]);              // что делал
+  p[11] = reduce(p[9] - p[10]);             // кармическая задача
+  p[15] = reduce(p[9] + p[10] + p[11] - p['7a']); // как отработать карму
+  p[17] = reduce(p[11] + p[6]);             // кармический комфорт
+  p[18] = reduce(p[11] + p[8]);             // работа с миссией
+  p[35] = reduce(p[9] + p[10] + p[11] - 10); // отношение к карме
+
+  // === ТЕНЕВОЙ ПОРТРЕТ ===
+  p.A  = reduce(p[1] + p[4]);
+  p.B  = reduce(p[2] + p[4]);
+  p.C  = reduce(p[2] + p[5]);
+  p.D  = reduce(p[3] + p[5]);
+  p.E  = reduce(p[4] + p[6]);
+  p.F  = reduce(p[5] + p[6]);
+  p.G1 = reduce(p.C + p.D);
+  p.G2 = reduce(p.B + p.F);
+  p.H  = reduce(p.A + p.E);
+
+  // === ДОПОЛНИТЕЛЬНЫЕ ===
+  p[19] = reduce(p[4] + p[6]);
+  p[20] = reduce(p[5] + p[6] + p['7a']);
+  p[21] = reduce(p[1]+p[2]+p[3]+p[4]+p[5]+p[6]);
+  p[30] = reduce(p[4]+p[5]+p[6]+p[12]);
+
+  // 31а — сумма всех цифр даты, сократить (-22) до ≤22
+  const allDigits = String(d).padStart(2,'0') + String(m).padStart(2,'0') + String(y);
+  const rawSum = allDigits.split('').reduce((a,c)=>a+parseInt(c),0);
+  p['31a'] = reduce(rawSum);
+
+  // 31б — нумерологическое сведение до ≤9
+  p['31b'] = reduceNum(rawSum);
+
+  p[32] = reduce(p.A - p[10]);
+  p[33] = reduce(p.A - p[12]);
+  p[34] = reduce(p.A - p[11]);
+
+  return p;
+}
+
+let _pfGender = 'male';
+function pfSelGender(g) {
+  _pfGender = g;
+  document.getElementById('pf-gbm').classList.toggle('sel', g==='male');
+  document.getElementById('pf-gbf').classList.toggle('sel', g==='female');
+}
+window.pfSelGender = pfSelGender;
+
+function startPortrait() {
+  const name  = document.getElementById('pf-name').value.trim();
+  const d     = parseInt(document.getElementById('pf-day').value);
+  const m     = parseInt(document.getElementById('pf-month').value);
+  const y     = parseInt(document.getElementById('pf-year').value);
+
+  if (!name) return alert('Введи имя');
+  if (!d||!m||!y) return alert('Введи дату рождения');
+  if (d<1||d>31||m<1||m>12||y<1900||y>2025) return alert('Проверь дату');
+
+  window._appState.portraitData = { name, gender:_pfGender, day:d, month:m, year:y };
+  showScreen('screen-portrait-loading');
+  startCardAnim();
+  getPortrait();
+}
+window.startPortrait = startPortrait;
+
+const CARD_IMGS = [
+  'https://sacred-texts.com/tarot/pkt/img/ar00.jpg',
+  'https://sacred-texts.com/tarot/pkt/img/ar01.jpg',
+  'https://sacred-texts.com/tarot/pkt/img/ar02.jpg',
+  'https://sacred-texts.com/tarot/pkt/img/ar03.jpg',
+  'https://sacred-texts.com/tarot/pkt/img/ar06.jpg',
+  'https://sacred-texts.com/tarot/pkt/img/ar17.jpg',
+  'https://sacred-texts.com/tarot/pkt/img/ar18.jpg',
+  'https://sacred-texts.com/tarot/pkt/img/ar19.jpg'
+];
+
+function startCardAnim() {
+  const shuffle = [...CARD_IMGS].sort(()=>Math.random()-.5);
+  ['tc0','tc1','tc2'].forEach((id,i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('flipped');
+    el.querySelector('.tc-front img').src = shuffle[i];
+  });
+  function cycle() {
+    ['tc0','tc1','tc2'].forEach(id => document.getElementById(id).classList.remove('flipped'));
+    [1500,3000,4500].forEach((ms,i) => {
+      const t = setTimeout(()=>document.getElementById(['tc0','tc1','tc2'][i]).classList.add('flipped'), ms);
+      window._appState.cardAnimTimeouts.push(t);
+    });
+    const t = setTimeout(()=>{
+      ['tc0','tc1','tc2'].forEach(id=>document.getElementById(id).classList.remove('flipped'));
+      const t2 = setTimeout(cycle, 1500);
+      window._appState.cardAnimTimeouts.push(t2);
+    }, 6000);
+    window._appState.cardAnimTimeouts.push(t);
+  }
+  cycle();
+}
+
+function stopCardAnim() {
+  window._appState.cardAnimTimeouts.forEach(clearTimeout);
+  window._appState.cardAnimTimeouts = [];
+}
+
+async function getPortrait() {
+  const ud = window._appState.portraitData;
+  const p  = calcPortrait(ud.day, ud.month, ud.year);
+  const a  = ARCANA;
+  const arc = (n) => `${n} — ${a[n].n} (${a[n].k})`;
+
+  const data = `ДАТА РОЖДЕНИЯ: ${ud.day}.${ud.month}.${ud.year}
+
+═══ ИНДИВИДУАЛЬНЫЙ ПОРТРЕТ ═══
+ЖИЗНЕННЫЙ ПУТЬ:
+1. Детство и юность:         ${arc(p[1])}
+2. Зрелый возраст:           ${arc(p[2])}
+3. Осень жизни:              ${arc(p[3])}
+
+ПСИХИКА:
+4. Подсознание (страхи, комплексы, блокировки): ${arc(p[4])}
+5. Сознание (цели, стремления, самореализация):  ${arc(p[5])}
+6. Сверхсознание (таланты, духовные покровители): ${arc(p[6])}
+
+МИССИЯ:
+7а. Миссия (жизненная задача):   ${arc(p['7a'])}
+8.  Дары (потенциал для миссии): ${arc(p[8])}
+
+ГАРМОНИЯ И САМОВОСПРИЯТИЕ:
+12. Карта психологической гармонии: ${arc(p[12])}
+13. Как человек видит себя:         ${arc(p[13])}
+14. Как человека воспринимают другие: ${arc(p[14])}
+
+═══ КАРМИЧЕСКИЙ ПОРТРЕТ ═══
+9.  Кем был в предыдущем воплощении:    ${arc(p[9])}
+10. Что делал в предыдущем воплощении:  ${arc(p[10])}
+11. Кармические задачи в этой жизни:    ${arc(p[11])}
+15. Как отработать карму:               ${arc(p[15])}
+17. Точка кармического комфорта:        ${arc(p[17])}
+18. Как работать с миссией воплощения:  ${arc(p[18])}
+35. Отношение к своей карме:            ${arc(p[35])}
+
+═══ ТЕНЕВОЙ ПОРТРЕТ ═══
+A. Сильнейшее подсознательное влияние:           ${arc(p.A)}
+B. Что наиболее обусловливает, на что «осуждён»: ${arc(p.B)}
+C. Что самое важное в жизни:                     ${arc(p.C)}
+D. Как справляется со стрессом:                  ${arc(p.D)}
+E. Что делает автоматически и хорошо:            ${arc(p.E)}
+F. Что отвергает и не понимает:                  ${arc(p.F)}
+G1. Потенциал при полном использовании (вариант 1): ${arc(p.G1)}
+G2. Потенциал при полном использовании (вариант 2): ${arc(p.G2)}
+H. Сфера деструктивных тенденций:                  ${arc(p.H)}
+
+═══ ДОПОЛНИТЕЛЬНЫЕ ПОЗИЦИИ ═══
+19. Вне сознания человека:     ${arc(p[19])}
+20. Над сознанием человека:    ${arc(p[20])}
+21. Самое важное дело в жизни: ${arc(p[21])}
+30. Точка психического дискомфорта: ${arc(p[30])}
+31а. Судьба (таро):            ${arc(p['31a'])}
+31б. Судьба (нумерология):     ${p['31b']} (число от 1 до 9)
+32. Отношение к деньгам:       ${arc(p[32])}
+33. Отношение к партнёрству:   ${arc(p[33])}
+34. Отношение к семье и традициям: ${arc(p[34])}`;
+
+  const systemPrompt = `Ты эксперт по психологическому портрету Таро по методике Аллы Алиции Хшановской. Ты изучил десятки реальных разборов и строго воспроизводишь их структуру, язык и внутреннюю логику.
+
+ОБРАЩЕНИЕ: только «ты». Никогда третье лицо и никогда имя в третьем лице.
+Пол: ${ud.gender==='male'?'мужской — используй мужской род: учился, был, проходил, реализовывал':'женский — используй женский род: училась, была, проходила, реализовывала'}
+
+═══════════════════════════════════════
+ПАТТЕРН 1 — ПОЗИЦИЯ 1 (детство / день рождения)
+═══════════════════════════════════════
+Открывай строго этой формулой:
+«Душа пришла [глагол] свою [качество] через [путь]»
+
+Затем последовательно:
+→ Позитивный сценарий: что это за человек в лучшем проявлении, каков его природный ресурс
+→ Конкретные задачи и советы для этого периода
+→ Гендерное уточнение для пола пользователя
+→ «В минусе:» — что происходит при непроработке этой позиции (не осуждение, а описание последствий)
+
+═══════════════════════════════════════
+ПАТТЕРН 2 — ПОЗИЦИЯ 2 (зрелость / месяц = урок прошлого воплощения)
+═══════════════════════════════════════
+Строго четыре блока в этом порядке:
+1. «Не пройден урок [название качества/сферы] — [что именно не было сделано в прошлом воплощении, конкретно]»
+2. «Урок НВ (настоящего воплощения) — [что нужно сделать и проработать в этой жизни]»
+3. «ЛОВУШКА — [во что человек может скатиться, если урок не пройден, конкретная психологическая ловушка]»
+4. «МАМА — [как эта карта проявляется в образе матери]» — всегда конкретно, часто показывает деструктивную динамику. Описывай мать как живого человека с характером, манерами, фразами.
+
+═══════════════════════════════════════
+ПАТТЕРН 3 — ПОЗИЦИЯ 3 (осень жизни / год)
+═══════════════════════════════════════
+Описание позднего периода жизни → «В минусе:» →
+ОБЯЗАТЕЛЬНО завершай серией из 5–8 рефлексивных вопросов от первого лица к человеку.
+Пример формата: «Есть ли у тебя дети? Принимаешь ли ты перемены? Умеешь ли ты обнулиться?»
+Ни одна другая позиция этого не делает — только позиция 3.
+
+═══════════════════════════════════════
+ПАТТЕРН 4 — ПОЗИЦИЯ 7а (миссия)
+═══════════════════════════════════════
+Пять обязательных блоков:
+1. Развёрнутое вдохновляющее описание задачи — что этот человек пришёл делать в мире
+2. «Минус / В минусе — [что происходит при непроработке]»
+3. «Профессии: [конкретный список профессий и сфер деятельности]»
+4. Грубая ошибка — одно-два предложения о том, что категорически нельзя делать с этой миссией
+5. «Многие люди с правильно проработанной [название карты] на 7 позиции становятся [конкретные известные роли/профессии]»
+
+═══════════════════════════════════════
+ПАТТЕРН 5 — ТЕНЕВОЙ ПОРТРЕТ (A–H)
+═══════════════════════════════════════
+Каждая позиция имеет свою обязательную структуру:
+
+A (подавленные детские энергии):
+«[Название энергии/темы] — [что именно подавлено].
+Комплекс: [токсичное убеждение о себе — одна короткая фраза от первого лица, например: "меня не любят такой, какая я есть"]»
+
+B (детская травма):
+«[Название травмы] — [что произошло в семье].
+[Описание семейной динамики и последствий для взрослой жизни]
+Фразы из детства: [конкретные токсичные фразы, которые слышал ребёнок — в кавычках, несколько вариантов]»
+
+C: тема/сфера + краткое описание задачи
+
+D (стресс-реакция): описание поведения в стрессе + «Психосоматика: [конкретные органы и заболевания]»
+
+E (автоматический талант): «Талант [название + описание]. Страх [конкретный страх связанный с этим талантом]»
+
+F (что отвергается): краткое — «отвергают [X]» или «не принимают [X]»
+
+G1, G2 (потенциал): чего может достичь при полном использовании
+
+H (деструкция): конкретное деструктивное поведение + гендерный вариант:
+«Если это женщина — [специфика]. Если это мужчина — [специфика]»
+
+═══════════════════════════════════════
+ПАТТЕРН 6 — КАРМИЧЕСКИЙ БЛОК (9, 10, 11)
+═══════════════════════════════════════
+П.9 — всегда конкретная социальная роль или архетип прошлого воплощения (не просто «был плохим», а: «крупный чиновник», «монахиня», «торговец», «воин»)
+П.10 — всегда конкретные негативные действия: злоупотребление властью, предательство, обман, насилие, отречение
+П.11 — позитивная задача в этой жизни, строго противоположная деструкции прошлого (принцип маятника: разрушал структуры → строй; манипулировал словом → будь честен и открыт)
+
+═══════════════════════════════════════
+ПАТТЕРН 7 — ГЕНДЕРНОЕ РАЗВЕТВЛЕНИЕ
+═══════════════════════════════════════
+Для позиций 1, 2, 7а, 8 давай отдельное уточнение для пола пользователя.
+Для ${ud.gender==='male'?'мужчины: акцент на ответственности, карьере, отцовстве, отношении к власти':'женщины: акцент на отношениях с партнёром, роли в семье, материнстве, женской идентичности'}.
+
+═══════════════════════════════════════
+ПАТТЕРН 8 — ПОЗИЦИИ 12 и 30
+═══════════════════════════════════════
+П.12 (зона комфорта): «Человеку хорошо, когда [конкретные бытовые, социальные, психологические условия]...»
+— Описывай конкретно: что за обстановка, какие люди рядом, какой ритм жизни
+
+П.30 (зона дискомфорта): ВСЕГДА начинай с детского дефицита:
+«В детстве не хватало [X]»
+Затем: как этот дефицит превратился во взрослый триггер — что именно выбивает из равновесия.
+
+═══════════════════════════════════════
+ПАТТЕРН 9 — ПОЗИЦИИ 13 и 14
+═══════════════════════════════════════
+П.13 (самовосприятие): «[Ты] воспринимаешь себя как [позитивные качества]... хотя иногда замечаешь в себе [честная самокритика]»
+П.14 (образ у других): «Люди воспринимают тебя как [качество], что нередко приводит к тому, что тебя начинают считать [нейтральное или слегка карикатурное]»
+ВАЖНО: между П.13 и П.14 должно быть ощутимое расхождение — это намеренный приём, показывающий разрыв между внутренним и внешним образом.
+
+═══════════════════════════════════════
+ПАТТЕРН 10 — БЛОК «В МИНУСЕ» КАК ОБЯЗАТЕЛЬНЫЙ
+═══════════════════════════════════════
+Каждая значимая позиция ОБЯЗАТЕЛЬНО содержит блок «В минусе:» или «Минус:».
+Минус описывает поведение как следствие непроработки — никакого осуждения, только причинно-следственная связь.
+Без этого блока интерпретация незавершена.
+
+═══════════════════════════════════════
+ДОПОЛНИТЕЛЬНЫЕ ПРИНЦИПЫ
+═══════════════════════════════════════
+— Повторяющиеся карты в разных позициях — усиленная тема, называй её явно
+— Сопоставляй миссию (7а) с самовосприятием (13): совпадают ли? Видит ли человек свою миссию?
+— Сравнивай зону комфорта (12) и зону дискомфорта (30): в чём противоречие?
+— Ищи внутренние противоречия между блоками — именно они дают глубину разбора
+— Конкретика везде: не «склонен к творчеству», а «именно в [области] твой талант проявляется автоматически»
+— Язык живой, психологический, не эзотерический глянец
+
+═══════════════════════════════════════
+СТРУКТУРА ОТВЕТА (используй ## для разделов)
+═══════════════════════════════════════
+
+## Общий образ
+2–3 предложения — суть личности, ключевые карты, главная тема портрета
+
+## Жизненный путь
+П.1 по паттерну 1 → П.2 по паттерну 2 (с ЛОВУШКОЙ и МАМОЙ) → П.3 по паттерну 3 (с вопросами)
+
+## Психика
+П.4 (подсознание: страхи, комплексы) → П.5 (сознание: цели, ценности) → П.6 (сверхсознание: скрытые таланты)
+
+## Миссия
+П.7а по паттерну 4 (задача → минус → профессии → ошибка → примеры) + П.8 (дары)
+
+## Кармический блок
+П.9, П.10, П.11 по паттерну 6 + П.15 (как отработать) + П.17 (кармический комфорт) + П.18 (работа с миссией)
+
+## Теневой портрет
+Все позиции A–H по паттерну 5 (комплекс, токсичные фразы, психосоматика, талант, отвержение, деструкция)
+
+## Самовосприятие и образ
+П.13 vs П.14 по паттерну 9 — разрыв между внутренним и внешним
+
+## Зона комфорта и дискомфорта
+П.12 и П.30 по паттерну 8 (детский дефицит → взрослый триггер)
+
+## Ключевые темы жизни
+Деньги П.32 · Партнёрство П.33 · Семья П.34 · Главное дело П.21
+
+## Судьба
+П.31а (таро) + П.31б (нумерология) — интерпретируй вместе как единое послание о судьбе
+
+## Сильные стороны (список 3–4 пункта)
+
+## Теневые стороны и риски (список 3–4 пункта)
+
+## Формула личности
+Одна фраза-архетип — ёмко и точно`;
+
+  try {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:4000,
+        system: systemPrompt,
+        messages:[{role:'user', content:`Создай психологический портрет по методике Хшановской.\n\n${data}`}]
+      })
+    });
+    const json = await res.json();
+    showPortraitResult(json.content?.[0]?.text || 'Не удалось получить портрет.');
+  } catch(e) { showPortraitResult('Ошибка: ' + e.message); }
+}
+
+function mdToHtml(text) {
+  return text
+    .replace(/^## (.+)$/gm,'<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^[-•] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g,m=>`<ul>${m}</ul>`)
+    .replace(/\n{2,}/g,'</p><p>')
+    .replace(/^(?!<[hul])(.+)$/gm,'$1')
+    .replace(/^<\/p><p>(<[hul])/gm,'$1');
+}
+
+function showPortraitResult(text) {
+  stopCardAnim();
+  window._appState.portraitText = text;
+  window._appState.portraitSaved = false;
+
+  document.getElementById('p-result-text').innerHTML = `<p>${mdToHtml(text)}</p>`;
+
+  const user = window._appState.firebaseUser;
+  const saveWrap = document.getElementById('p-save-wrap');
+  if (user && !window._appState.isGuest) {
+    saveWrap.innerHTML = '<button class="s-btn" onclick="savePortrait()">Сохранить портрет</button>';
+    document.getElementById('p-my-portraits-btn').style.display = 'block';
+  } else {
+    saveWrap.innerHTML = '';
+    document.getElementById('p-my-portraits-btn').style.display = 'none';
+  }
+  document.getElementById('p-save-notice').style.display = 'none';
+  setTimeout(()=>showScreen('screen-portrait-result'), 800);
+}
+
+// ═══════════════ SAVE / LIST PORTRAITS ═══════════════
+async function getUserPortraits() {
+  const user = window._appState.firebaseUser;
+  if (!user) return [];
+  const q = window._fb.query(
+    window._fb.collection(window._fbDb,'portraits'),
+    window._fb.where('userId','==',user.uid),
+    window._fb.orderBy('createdAt','desc')
+  );
+  const snap = await window._fb.getDocs(q);
+  const res = []; snap.forEach(d=>res.push({id:d.id,...d.data()})); return res;
+}
+
+async function savePortrait() {
+  if (window._appState.portraitSaved) return;
+  const user = window._appState.firebaseUser;
+  if (!user) return alert('Войди чтобы сохранить');
+  try {
+    const existing = await getUserPortraits();
+    if (existing.length >= MAX_PORTRAITS) { showReplaceModal(existing); return; }
+    await doSavePortrait();
+  } catch(e) { alert('Ошибка: '+e.message); }
+}
+window.savePortrait = savePortrait;
+
+async function doSavePortrait(replaceId) {
+  const user = window._appState.firebaseUser;
+  const ud   = window._appState.portraitData;
+  try {
+    if (replaceId) await window._fb.deleteDoc(window._fb.doc(window._fbDb,'portraits',replaceId));
+    await window._fb.addDoc(window._fb.collection(window._fbDb,'portraits'), {
+      userId:user.uid,
+      portraitName:`${ud.name} ${ud.day}.${ud.month}.${ud.year}`,
+      birthdate:`${ud.day}.${ud.month}.${ud.year}`,
+      portraitText: window._appState.portraitText,
+      createdAt: window._fb.Timestamp.now()
+    });
+    window._appState.portraitSaved = true;
+    closeModal();
+    document.getElementById('p-save-wrap').innerHTML = '';
+    document.getElementById('p-save-notice').style.display = 'block';
+  } catch(e) { alert('Ошибка: '+e.message); }
+}
+window.doSavePortrait = doSavePortrait;
+
+function showReplaceModal(portraits) {
+  const rows = portraits.map(p=>{
+    const dt = p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt.seconds*1000);
+    return `<div class="modal-portrait-row">
+      <div class="modal-portrait-info"><h4>${p.portraitName||p.birthdate}</h4><p>${dt.toLocaleDateString('ru-RU')} ${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</p></div>
+      <button class="modal-replace-btn" onclick="doSavePortrait('${p.id}')">Заменить</button>
+    </div>`;
+  }).join('');
+  const ov = document.createElement('div');
+  ov.className='modal-overlay'; ov.id='replace-modal';
+  ov.innerHTML=`<div class="modal-sheet">
+    <div class="modal-title">Достигнут лимит портретов</div>
+    <div class="modal-sub">Сохранено ${MAX_PORTRAITS} из ${MAX_PORTRAITS}. Выбери портрет для замены:</div>
+    ${rows}
+    <button class="modal-cancel" onclick="closeModal()">Отмена</button>
+  </div>`;
+  ov.addEventListener('click',e=>{if(e.target===ov)closeModal();});
+  document.body.appendChild(ov);
+}
+
+function closeModal() { const m=document.getElementById('replace-modal'); if(m)m.remove(); }
+window.closeModal = closeModal;
+
+async function deletePortrait(docId, event) {
+  event.stopPropagation();
+  if (!confirm('Удалить этот портрет?')) return;
+  try {
+    await window._fb.deleteDoc(window._fb.doc(window._fbDb,'portraits',docId));
+    showMyPortraits();
+  } catch(e) { alert('Ошибка: '+e.message); }
+}
+window.deletePortrait = deletePortrait;
+
+async function showMyPortraits() {
+  const user = window._appState.firebaseUser;
+  if (!user && !window._appState.isGuest) return alert('Войди в систему');
+  if (!user) { alert('Сохранение доступно только для зарегистрированных пользователей'); return; }
+
+  showScreen('screen-my-portraits');
+  const listEl = document.getElementById('portraits-list-inner');
+  listEl.innerHTML = '<p style="color:var(--muted);text-align:center;padding:1rem">Загрузка…</p>';
+  try {
+    const portraits = await getUserPortraits();
+    if (!portraits.length) { listEl.innerHTML='<p style="color:var(--muted);text-align:center">Портретов пока нет</p>'; return; }
+    const note = `<p style="font-size:11px;color:var(--muted);text-align:right;margin-bottom:12px;letter-spacing:.06em">${portraits.length} / ${MAX_PORTRAITS}</p>`;
+    let html = note;
+    portraits.forEach(p=>{
+      const dt = p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt.seconds*1000);
+      const text = p.portraitText.replace(/`/g,'\\`').replace(/\\/g,'\\\\');
+      html += `<div class="portrait-card-item">
+        <div class="portrait-card-info" onclick="viewSavedPortrait(\`${text}\`)">
+          <h3>${p.portraitName||p.birthdate}</h3>
+          <p>${dt.toLocaleDateString('ru-RU')} ${dt.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})}</p>
+        </div>
+        <button class="portrait-delete-btn" onclick="deletePortrait('${p.id}',event)" title="Удалить">✕</button>
+      </div>`;
+    });
+    listEl.innerHTML = html;
+  } catch(e) { listEl.innerHTML=`<p style="color:#f08;text-align:center">${e.message}</p>`; }
+}
+window.showMyPortraits = showMyPortraits;
+
+function viewSavedPortrait(text) {
+  window._appState.portraitText = text;
+  window._appState.portraitSaved = true;
+  document.getElementById('p-result-text').innerHTML = `<p>${mdToHtml(text)}</p>`;
+  document.getElementById('p-save-wrap').innerHTML = '';
+  document.getElementById('p-save-notice').style.display = 'none';
+  showScreen('screen-portrait-result');
+}
+window.viewSavedPortrait = viewSavedPortrait;
+
+// ═══════════════ WEEK / FORECAST ═══════════════
+function updateNatalBadge() {
+  const prof = window._appState.profile;
+  const wrap = document.getElementById('w-natal-wrap');
+  const el   = document.getElementById('w-natal-sign');
+  if (prof && prof.day) {
+    const {sign} = getSolarSign(prof.day, prof.month);
+    el.textContent = 'Натальное Солнце: ' + sign;
+    wrap.style.display = 'block';
+  } else { wrap.style.display = 'none'; }
+}
+
+function getMoonNow() {
+  const now = new Date();
+  const J2000 = new Date('2000-01-01T12:00:00Z');
+  const days  = (now - J2000) / 86400000;
+  const lon   = ((218.316 + 13.176396*days) % 360 + 360) % 360;
+  const signs = ['Овен','Телец','Близнецы','Рак','Лев','Дева','Весы','Скорпион','Стрелец','Козерог','Водолей','Рыбы'];
+  const moonSign = signs[Math.floor(lon/30)];
+  const knownNew = new Date('2000-01-06T18:14:00Z');
+  const cyclePos = (((now-knownNew)/86400000) % 29.53058867 + 29.53058867) % 29.53058867;
+  const phase    = cyclePos / 29.53058867;
+  let phaseName, phaseEmoji;
+  if      (phase<.035) {phaseName='Новолуние';          phaseEmoji='🌑';}
+  else if (phase<.25)  {phaseName='Растущий серп';      phaseEmoji='🌒';}
+  else if (phase<.285) {phaseName='Первая четверть';    phaseEmoji='🌓';}
+  else if (phase<.465) {phaseName='Растущая луна';      phaseEmoji='🌔';}
+  else if (phase<.535) {phaseName='Полнолуние';         phaseEmoji='🌕';}
+  else if (phase<.715) {phaseName='Убывающая луна';     phaseEmoji='🌖';}
+  else if (phase<.785) {phaseName='Последняя четверть'; phaseEmoji='🌗';}
+  else if (phase<.965) {phaseName='Убывающий серп';     phaseEmoji='🌘';}
+  else                 {phaseName='Новолуние';           phaseEmoji='🌑';}
+  return {moonSign, phaseName, phaseEmoji, cycleDay:Math.round(cyclePos)};
+}
+
+function getSolarNow() {
+  const now=new Date(), m=now.getMonth()+1, d=now.getDate();
+  const {sign} = getSolarSign(d,m);
+  const season = m>=3&&m<=5?'весна':m>=6&&m<=8?'лето':m>=9&&m<=11?'осень':'зима';
+  const retro = [
+    {s:new Date('2026-01-30'),e:new Date('2026-02-20'),p:'Меркурий'},
+    {s:new Date('2026-05-29'),e:new Date('2026-06-22'),p:'Меркурий'},
+    {s:new Date('2026-09-22'),e:new Date('2026-10-15'),p:'Меркурий'},
+    {s:new Date('2026-03-01'),e:new Date('2026-07-12'),p:'Венера'},
+  ].filter(r=>now>=r.s&&now<=r.e).map(r=>r.p);
+  return {sign, season, retro};
+}
+
+const TONE = {
+  calm:      {label:'Состояние покоя',   color:'#7ba7c2', tone:'мягкий, созерцательный. Образы воды, тишины, лунного света.'},
+  energy:    {label:'Состояние энергии', color:'#d4845a', tone:'динамичный, прямой. Образы пламени, рассвета.'},
+  melancholy:{label:'Состояние грусти',  color:'#8b7fa8', tone:'бережный, поэтичный. Принимай, не исправляй.'},
+  joy:       {label:'Состояние радости', color:'#c9b46a', tone:'тёплый, живой. Образы солнца, золотого света.'},
+  tension:   {label:'Состояние тревоги', color:'#7a9e8e', tone:'заземляющий, конкретный. Дай опору.'},
+  flow:      {label:'Состояние потока',  color:'#a0b89a', tone:'поэтичный, мистический. Образы реки, звёзд.'}
+};
+
+let _selectedCard = null;
+
+function selectCard(el) {
+  document.querySelectorAll('.mood-card').forEach(c=>c.classList.remove('selected','dimmed'));
+  el.classList.add('selected');
+  document.querySelectorAll('.mood-card:not(.selected)').forEach(c=>c.classList.add('dimmed'));
+  _selectedCard = el.dataset.id;
+  generateForecast();
+}
+window.selectCard = selectCard;
+
+async function generateForecast() {
+  if (!_selectedCard) return;
+  document.getElementById('w-loading').classList.add('vis');
+  document.getElementById('w-result').classList.remove('vis');
+  document.getElementById('cardsGrid').style.display = 'none';
+
+  const moon  = getMoonNow();
+  const solar = getSolarNow();
+  const t     = TONE[_selectedCard];
+  const prof  = window._appState.profile;
+  const natal = prof && prof.day ? getSolarSign(prof.day, prof.month).sign : null;
+  const retroText = solar.retro.length ? `Ретроградные планеты: ${solar.retro.join(', ')}.` : 'Ретроградных планет нет.';
+
+  const sysPrompt = `Ты — астрологический советник Stellar.
+Астрологический контекст:
+— Сезон: ${solar.season}, Солнце в ${solar.sign}
+— ${moon.phaseName}, ${moon.cycleDay} день лунного цикла, Луна в ${moon.moonSign}
+— ${retroText}${natal ? `\n— Натальный знак Солнца: ${natal}` : ''}
+Карта состояния: «${t.label}».
+Прогноз на неделю (2 абзаца, 80–100 слов). Вплетай астроконтекст в образы, не перечисляй списком.${natal?' Натальный знак — тонкий личный акцент.':''} Тон: ${t.tone}
+Только текст. Без заголовков. Не называй состояние прямо.`;
+
+  try {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:sysPrompt, messages:[{role:'user',content:'Напиши прогноз на эту неделю.'}]})
+    });
+    const json = await res.json();
+    const text = json.content?.[0]?.text || 'Не удалось получить прогноз.';
+
+    document.getElementById('w-loading').classList.remove('vis');
+    document.getElementById('moodDot').style.background = t.color;
+    document.getElementById('resultLabel').textContent  = t.label;
+
+    const badge = document.getElementById('moonBadge');
+    badge.innerHTML = `<span style="font-size:14px">${moon.phaseEmoji}</span> <span>${moon.phaseName} · Луна в ${moon.moonSign}</span>`;
+    badge.style.display = 'flex';
+
+    document.getElementById('forecastText').innerHTML = text.split(/\n+/).filter(p=>p.trim()).map(p=>`<p>${p}</p>`).join('');
+    document.getElementById('w-result').classList.add('vis');
+  } catch(e) {
+    document.getElementById('w-loading').classList.remove('vis');
+    document.getElementById('forecastText').innerHTML = `<p style="color:#f08;font-size:13px">${e.message}</p>`;
+    document.getElementById('w-result').classList.add('vis');
+  }
+}
+
+function resetForecast() {
+  _selectedCard = null;
+  document.querySelectorAll('.mood-card').forEach(c=>c.classList.remove('selected','dimmed'));
+  document.getElementById('w-result').classList.remove('vis');
+  document.getElementById('w-loading').classList.remove('vis');
+  document.getElementById('moonBadge').style.display = 'none';
+  document.getElementById('cardsGrid').style.display = 'grid';
+}
+window.resetForecast = resetForecast;
+
+// ═══════════════ DAY PORTRAIT ═══════════════
+const DP_KEY = 'stellar_day_portrait_v1';
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function loadDayPortrait() {
+  try { return JSON.parse(localStorage.getItem(DP_KEY)); } catch { return null; }
+}
+function saveDayPortrait(obj) {
+  localStorage.setItem(DP_KEY, JSON.stringify(obj));
+}
+function deleteDayPortrait() {
+  localStorage.removeItem(DP_KEY);
+}
+
+// composite: fold positions of portA and portB (positions 1-8, shadow A-H, karmic 9-11)
+function calcComposite(portA, portB) {
+  const c = {};
+  const keys = [1,2,3,4,5,6,'7a','7b',8,9,10,11,'A','B','C','D','E','F','G1','G2','H'];
+  keys.forEach(k => {
+    const sum = (portA[k]||0) + (portB[k]||0);
+    c[k] = reduce(sum);
+  });
+  return c;
+}
+
+async function goToDayPortrait() {
+  const prof = window._appState.profile;
+
+  // Guest or no profile — show info
+  if (window._appState.isGuest || !prof || !prof.day) {
+    alert('Для портрета дня нужно заполнить профиль с датой рождения.');
+    openProfileEdit();
+    return;
+  }
+
+  const today = todayStr();
+  const saved = loadDayPortrait();
+
+  // Already have today's portrait — show it
+  if (saved && saved.date === today) {
+    showDayPortraitResult(saved.text, today);
+    return;
+  }
+
+  // Need to generate (and delete old if exists)
+  if (saved) deleteDayPortrait();
+
+  showScreen('screen-day-portrait-loading');
+  startCardAnim();
+  await generateDayPortrait(prof, today);
+}
+window.goToDayPortrait = goToDayPortrait;
+
+async function generateDayPortrait(prof, today) {
+  const [y, m, d] = today.split('-').map(Number);
+
+  // Portrait of the person
+  const portPerson = calcPortrait(prof.day, prof.month, prof.year);
+  // Portrait of the day
+  const portDay    = calcPortrait(d, m, y);
+  // Composite
+  const comp = calcComposite(portPerson, portDay);
+
+  const a   = ARCANA;
+  const arc = (n) => n ? `${n} — ${a[n].n} (${a[n].k})` : '—';
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  const dateLabel = `${d} ${months[m-1]} ${y}`;
+
+  const compositeData = `ПОРТРЕТ ДНЯ: ${dateLabel}
+Личная дата рождения: ${prof.day}.${prof.month}.${prof.year}
+
+Портрет дня — это КОМПОЗИТ: сложение позиций личного портрета и портрета текущего дня.
+
+ИНДИВИДУАЛЬНЫЙ БЛОК (позиции 1–8):
+1. ${arc(comp[1])}
+2. ${arc(comp[2])}
+3. ${arc(comp[3])}
+4. Подсознание: ${arc(comp[4])}
+5. Сознание: ${arc(comp[5])}
+6. Сверхсознание: ${arc(comp[6])}
+7а. Миссия: ${arc(comp['7a'])}
+8. Дары: ${arc(comp[8])}
+
+КАРМИЧЕСКИЙ БЛОК (9–11):
+9. ${arc(comp[9])}
+10. ${arc(comp[10])}
+11. ${arc(comp[11])}
+
+ТЕНЕВОЙ БЛОК:
+A: ${arc(comp.A)}
+B: ${arc(comp.B)}
+C: ${arc(comp.C)}
+D: ${arc(comp.D)}
+E: ${arc(comp.E)}
+F: ${arc(comp.F)}
+G1: ${arc(comp.G1)}
+G2: ${arc(comp.G2)}
+H: ${arc(comp.H)}`;
+
+  const systemPrompt = `Ты — астрологический психолог сервиса Stellar. Ты создаёшь «портрет дня» на основе КОМПОЗИТА личного портрета человека и портрета текущего дня.
+
+Стиль: обращение на «ты». Тон — живой, конкретный, практичный. Пол: ${prof.gender==='male'?'мужской':'женский'}.
+
+СТРУКТУРА — строго по шести позициям композита (markdown ##):
+
+## Начало дня
+Позиция 1 композита: ${arc(comp[1])} — как начнётся день, с какой энергией войти в утро
+
+## Что ожидает днём
+Позиция 2 композита: ${arc(comp[2])} — основная тема и характер середины дня
+
+## Конец дня
+Позиция 3 композита: ${arc(comp[3])} — чем завершится день, к чему прийти к вечеру
+
+## Сложные аспекты
+Позиция 4 композита: ${arc(comp[4])} — что может травмировать, задевать или мешать; чего избегать
+
+## Социальная среда
+Позиция 5 композита: ${arc(comp[5])} — окружение, внешний мир, социальные взаимодействия дня
+
+## Что поможет
+Позиция 6 композита: ${arc(comp[6])} — на что опираться, что поддержит в течение дня
+
+Каждый раздел: 2–3 предложения, конкретно и образно. Общий объём 180–240 слов. Никаких общих фраз — только то, что реально следует из карты в данной позиции.`;
+
+  try {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:1500,
+        system: systemPrompt,
+        messages:[{role:'user', content:`Создай портрет дня.\n\n${compositeData}`}]
+      })
+    });
+    const json = await res.json();
+    const text = json.content?.[0]?.text || 'Не удалось сформировать портрет дня.';
+
+    // Save locally
+    saveDayPortrait({ date: today, text });
+    stopCardAnim();
+    showDayPortraitResult(text, today);
+  } catch(e) {
+    stopCardAnim();
+    showScreen('screen-day-portrait');
+    document.getElementById('dp-result-text').innerHTML = `<p style="color:#f08">${e.message}</p>`;
+  }
+}
+
+function showDayPortraitResult(text, today) {
+  const [y, m, d] = today.split('-').map(Number);
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('dp-date-badge').textContent = `${d} ${months[m-1]} ${y}`;
+  document.getElementById('dp-result-text').innerHTML = `<p>${mdToHtml(text)}</p>`;
+  showScreen('screen-day-portrait');
+}
+
+async function refreshDayPortrait() {
+  deleteDayPortrait();
+  const prof = window._appState.profile;
+  const today = todayStr();
+  showScreen('screen-day-portrait-loading');
+  await generateDayPortrait(prof, today);
+}
+window.refreshDayPortrait = refreshDayPortrait;
+
+// ═══════════════ SCHEMA (РАСЧЁТ ПОЗИЦИЙ) ═══════════════
+function goToSchema() {
+  showScreen('screen-schema-form');
+}
+window.goToSchema = goToSchema;
+
+function scAbsDiff(a,b) { const d=Math.abs(a-b); return d===0?22:d; }
+
+function scCalcAll(d,m,y) {
+  const p={};
+  p[1]=reduce(d); p[2]=reduce(m); p[3]=reduce(digitSum(y));
+  p[4] =reduce(p[1]+p[2]); p[5]=reduce(p[2]+p[3]); p[6]=reduce(p[4]+p[5]);
+  p['7a']=reduce(p[1]+p[5]); p['7b']=reduce(p[3]+p[4]);
+  p[8] =reduce(p[2]+p[6]);
+  p[12]=reduce(p[4]+p[5]+p[6]);
+  p[13]=reduce(p[1]+p[4]+p[6]); p[14]=reduce(p[3]+p[5]+p[6]);
+  p[9] =scAbsDiff(p[1],p[2]); p[10]=scAbsDiff(p[2],p[3]); p[11]=scAbsDiff(p[9],p[10]);
+  p[15]=reduce(p[9]+p[10]+p[11]-p['7a']);
+  p[16]=reduce(p[11]+p['7a']);
+  p[17]=reduce(p[11]+p[6]); p[18]=reduce(p[11]+p[8]);
+  p[35]=reduce(p[9]+p[10]+p[11]-10);
+  const md=Math.abs(p[12]-p['7a']); p['M']=md===0?22:md;
+  p.A=reduce(p[1]+p[4]); p.B=reduce(p[2]+p[4]); p.C=reduce(p[2]+p[5]);
+  p.D=reduce(p[3]+p[5]); p.E=reduce(p[4]+p[6]); p.F=reduce(p[5]+p[6]);
+  p.G1=reduce(p.C+p.D); p.G2=reduce(p.B+p.F); p.H=reduce(p.A+p.E);
+  p[19]=reduce(p[4]+p[6]); p[20]=reduce(p[5]+p[6]+p['7a']);
+  p[21]=reduce(p[1]+p[2]+p[3]+p[4]+p[5]+p[6]);
+  p[30]=reduce(p[4]+p[5]+p[6]+p[12]);
+  const raw=String(d).padStart(2,'0')+String(m).padStart(2,'0')+String(y);
+  const rawSum=raw.split('').reduce((s,c)=>s+parseInt(c),0);
+  p['31a']=reduce(rawSum); p['31b']=reduceNum(rawSum);
+  p[32]=reduce(p.A-p[10]); p[33]=reduce(p.A-p[12]); p[34]=reduce(p.A-p[11]);
+  return p;
+}
+
+function scToRoman(n) {
+  const v=[22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1];
+  const s=['XXII','XXI','XX','XIX','XVIII','XVII','XVI','XV','XIV','XIII','XII','XI','X','IX','VIII','VII','VI','V','IV','III','II','I'];
+  let r=''; for(let i=0;i<v.length;i++){while(n>=v[i]){r+=s[i];n-=v[i];}} return r||'—';
+}
+
+const SC_ARC={1:'Маг',2:'Жрица',3:'Императрица',4:'Император',5:'Иерофант',
+  6:'Влюблённые',7:'Колесница',8:'Справедливость',9:'Отшельник',10:'Колесо',
+  11:'Сила',12:'Повешенный',13:'Смерть',14:'Умеренность',15:'Дьявол',
+  16:'Башня',17:'Звезда',18:'Луна',19:'Солнце',20:'Суд',21:'Мир',22:'Шут'};
+
+const SC_ARC_FULL={1:'Маг',2:'Верховная Жрица',3:'Императрица',4:'Император',5:'Иерофант',
+  6:'Влюблённые',7:'Колесница',8:'Справедливость',9:'Отшельник',10:'Колесо Фортуны',
+  11:'Сила',12:'Повешенный',13:'Смерть',14:'Умеренность',15:'Дьявол',16:'Башня',
+  17:'Звезда',18:'Луна',19:'Солнце',20:'Суд',21:'Мир',22:'Шут'};
+
+function scBuildSVG(p) {
+  const CW=64, CH=58, GAP=8, COLS=7, ROWS=11;
+  const VW=COLS*(CW+GAP)+GAP, VH=ROWS*(CH+GAP)+GAP;
+  const C={
+    base:   {bg:'#1e2a1e',bd:'#e8813a',lb:'#f0a060',vl:'#ffffff'},
+    indiv:  {bg:'#1e2a1e',bd:'#e8813a',lb:'#f0a060',vl:'#ffffff'},
+    karmic: {bg:'#1a1f35',bd:'#4a6bb5',lb:'#7ba7e8',vl:'#ffffff'},
+    percep: {bg:'#2a2415',bd:'#c9a83a',lb:'#e8c860',vl:'#ffffff'},
+    shadow: {bg:'#1e1e1e',bd:'#555560',lb:'#9090a0',vl:'#ffffff'},
+    extra:  {bg:'#2a2415',bd:'#c9a83a',lb:'#e8c860',vl:'#ffffff'},
+    mission:{bg:'#1e2a1e',bd:'#e8813a',lb:'#f0a060',vl:'#ffffff'},
+  };
+  const CELLS=[
+    [0,0,'18','18','karmic'],[2,0,'19','19','extra'],[3,0,'35','35','indiv'],[4,0,'20','20','extra'],[6,0,'21','21','extra'],
+    [1,1,'17','17','karmic'],[3,1,'11','11','karmic'],[5,1,'15','15','karmic'],
+    [0,2,'13','13','percep'],[2,2,'9','9','karmic'],[4,2,'10','10','karmic'],[6,2,'14','14','percep'],
+    [1,3,'1','1','base'],[3,3,'2','2','base'],[5,3,'3','3','base'],
+    [2,4,'4','4','indiv'],[4,4,'5','5','indiv'],
+    [0,5,'M','М','shadow'],[2,5,'7b','7б','shadow'],[3,5,'6','6','indiv'],[5,5,'7a','7а','shadow'],[6,5,'16','16','indiv'],
+    [1,6,'30','30','shadow'],[3,6,'8','8','extra'],[5,6,'12','12','extra'],
+    [0,7,'31a','31','karmic'],[1,7,'32','32','extra'],[3,7,'A','A','shadow'],[5,7,'33','33','extra'],[6,7,'34','34','extra'],
+    [2,8,'B','B','shadow'],[4,8,'C','C','shadow'],
+    [1,9,'D','D','shadow'],[3,9,'E','E','shadow'],[5,9,'F','F','shadow'],
+    [0,10,'G1','G1','extra'],[3,10,'H','H','shadow'],[6,10,'G2','G2','extra'],
+  ];
+  const cx=col=>GAP+col*(CW+GAP)+CW/2;
+  const cy=row=>GAP+row*(CH+GAP)+CH/2;
+  let svg=`<svg xmlns="http://www.w3.org/2000/svg" width="100%" viewBox="0 0 ${VW} ${VH}" style="display:block">`;
+  svg+=`<rect width="${VW}" height="${VH}" fill="#0e0e14" rx="12"/>`;
+  const posMap={};
+  CELLS.forEach(([col,row,key])=>{posMap[key]=[col,row];});
+  const LINES=[['1','4'],['2','4'],['2','5'],['3','5'],['4','6'],['5','6'],['1','7a'],['5','7a'],['2','8'],['6','8'],['1','9'],['2','9'],['2','10'],['3','10'],['9','11'],['10','11'],['11','17'],['6','17']];
+  svg+=`<g stroke="rgba(255,255,255,0.06)" stroke-width="1" fill="none">`;
+  LINES.forEach(([a,b])=>{
+    if(posMap[a]&&posMap[b]){
+      const[ac,ar]=posMap[a],[bc,br]=posMap[b];
+      svg+=`<line x1="${cx(ac)}" y1="${cy(ar)}" x2="${cx(bc)}" y2="${cy(br)}"/>`;
+    }
+  });
+  svg+=`</g>`;
+  CELLS.forEach(([col,row,key,label,cKey])=>{
+    const x=GAP+col*(CW+GAP), y=GAP+row*(CH+GAP);
+    const c=C[cKey], val=p[key];
+    const dv=(key==='31b')?(val??'—'):scToRoman(val??0);
+    const rl=String(dv).length;
+    const vfs=rl<=3?18:rl<=5?14:rl<=7?11:9;
+    const an=val&&SC_ARC[val]?SC_ARC[val]:'';
+    svg+=`<g>`;
+    svg+=`<rect x="${x}" y="${y+8}" width="${CW}" height="${CH-8}" rx="8" fill="${c.bg}" stroke="${c.bd}" stroke-width="1.5"/>`;
+    svg+=`<circle cx="${x+CW/2}" cy="${y+8}" r="10" fill="#111116" stroke="${c.bd}" stroke-width="1.5"/>`;
+    svg+=`<text x="${x+CW/2}" y="${y+12}" text-anchor="middle" dominant-baseline="middle" font-family="Jost,sans-serif" font-size="8" font-weight="500" fill="${c.lb}">${label}</text>`;
+    svg+=`<text x="${x+CW/2}" y="${y+36}" text-anchor="middle" dominant-baseline="middle" font-family="Cormorant Garamond,serif" font-size="${vfs}" font-weight="400" letter-spacing="0.05em" fill="${c.vl}">${dv}</text>`;
+    if(an){svg+=`<text x="${x+CW/2}" y="${y+CH-4}" text-anchor="middle" dominant-baseline="middle" font-family="Jost,sans-serif" font-size="7" fill="${c.lb}" opacity="0.8">${an}</text>`;}
+    svg+=`</g>`;
+  });
+  svg+=`</svg>`;
+  return svg;
+}
+
+function scCalculate() {
+  const name = document.getElementById('sc-name').value.trim();
+  const d    = parseInt(document.getElementById('sc-day').value);
+  const m    = parseInt(document.getElementById('sc-month').value);
+  const y    = parseInt(document.getElementById('sc-year').value);
+  if (!d||!m||!y) return alert('Введи дату рождения');
+  if (d<1||d>31||m<1||m>12||y<1900||y>2025) return alert('Проверь дату');
+
+  const p = scCalcAll(d,m,y);
+  const months=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('sc-diagram-title').textContent = name || 'Схема позиций';
+  document.getElementById('sc-diagram-sub').textContent   = `${d} ${months[m-1]} ${y} г.`;
+  document.getElementById('sc-svg-wrap').innerHTML = scBuildSVG(p);
+
+  const groups=[
+    {title:'Базовые',items:[['Поз.1 День',p[1]],['Поз.2 Месяц',p[2]],['Поз.3 Год',p[3]]]},
+    {title:'Индивидуальный портрет',items:[['П.4 Подсознание',p[4]],['П.5 Сознание',p[5]],['П.6 Сверхсознание',p[6]],['П.7а Миссия',p['7a']],['П.7б Лжемиссия',p['7b']],['П.8 Дары',p[8]],['П.12 Гармония',p[12]],['П.13 Самовосприятие',p[13]],['П.14 Образ у других',p[14]]]},
+    {title:'Кармический портрет',items:[['П.9 Кем был',p[9]],['П.10 Что делал',p[10]],['П.11 Кармич. задача',p[11]],['П.15 Как отработать',p[15]],['П.16 Зацикливание',p[16]],['П.17 Кармич. комфорт',p[17]],['П.18 Работа с миссией',p[18]],['П.35 К карме',p[35]]]},
+    {title:'Теневой портрет',items:[['A',p.A],['B',p.B],['C',p.C],['D',p.D],['E',p.E],['F',p.F],['G1',p.G1],['G2',p.G2],['H',p.H]]},
+    {title:'Дополнительные',items:[['П.19',p[19]],['П.20',p[20]],['П.21',p[21]],['П.30',p[30]],['П.31а Судьба',p['31a']],['П.31б (число)',p['31b']],['П.32 Деньги',p[32]],['П.33 Партнёрство',p[33]],['П.34 Семья',p[34]]]},
+  ];
+  let html='';
+  groups.forEach(g=>{
+    html+=`<h3>${g.title}</h3><div class="sc-legend-grid">`;
+    g.items.forEach(([lbl,val])=>{
+      const roman=(typeof val==='number'&&lbl!=='П.31б (число)')?scToRoman(val):val;
+      html+=`<div class="sc-legend-item"><strong>${lbl}:</strong> ${roman} — ${SC_ARC_FULL[val]||''}</div>`;
+    });
+    html+=`</div>`;
+  });
+  document.getElementById('sc-legend').innerHTML=html;
+  showScreen('screen-schema-result');
+}
+window.scCalculate = scCalculate;
+
+function scReset() {
+  document.getElementById('sc-name').value='';
+  document.getElementById('sc-day').value='';
+  document.getElementById('sc-month').value='';
+  document.getElementById('sc-year').value='';
+  showScreen('screen-schema-form');
+}
+window.scReset = scReset;
+
+// ═══════════════ COMPATIBILITY ═══════════════
+function goToCompat() { showScreen('screen-compat-form'); }
+window.goToCompat = goToCompat;
+
+let _cpRelType = 'friendship';
+
+function cpSelRel(type, el) {
+  _cpRelType = type;
+  document.querySelectorAll('.cp-rel-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+window.cpSelRel = cpSelRel;
+
+// Composite: add matching positions, reduce to 1-22
+// Positions used: 1-8, shadow A-H/G1/G2, karmic 9-11
+function cpComposite(pA, pB) {
+  const c = {};
+  const keys = [1,2,3,4,5,6,'7a','7b',8,9,10,11,'A','B','C','D','E','F','G1','G2','H'];
+  keys.forEach(k => { c[k] = reduce((pA[k]||0) + (pB[k]||0)); });
+  return c;
+}
+
+// Find shared cards between two portraits (positions 1-8)
+function cpFindShared(pA, pB) {
+  const keysA = [1,2,3,4,5,6,'7a',8].map(k=>pA[k]);
+  const keysB = [1,2,3,4,5,6,'7a',8].map(k=>pB[k]);
+  const shared = [...new Set(keysA.filter(v => keysB.includes(v)))];
+  return shared;
+}
+
+async function cpCalculate() {
+  const name1 = document.getElementById('cp-name1').value.trim() || 'Партнёр 1';
+  const d1 = parseInt(document.getElementById('cp-day1').value);
+  const m1 = parseInt(document.getElementById('cp-month1').value);
+  const y1 = parseInt(document.getElementById('cp-year1').value);
+
+  const name2 = document.getElementById('cp-name2').value.trim() || 'Партнёр 2';
+  const d2 = parseInt(document.getElementById('cp-day2').value);
+  const m2 = parseInt(document.getElementById('cp-month2').value);
+  const y2 = parseInt(document.getElementById('cp-year2').value);
+
+  if (!d1||!m1||!y1) return alert('Введи дату рождения первого партнёра');
+  if (!d2||!m2||!y2) return alert('Введи дату рождения второго партнёра');
+  if (d1<1||d1>31||m1<1||m1>12||y1<1900||y1>2025) return alert('Проверь дату первого партнёра');
+  if (d2<1||d2>31||m2<1||m2>12||y2<1900||y2>2025) return alert('Проверь дату второго партнёра');
+
+  showScreen('screen-compat-loading');
+
+  const pA = calcPortrait(d1, m1, y1);
+  const pB = calcPortrait(d2, m2, y2);
+  const comp = cpComposite(pA, pB);
+  const shared = cpFindShared(pA, pB);
+
+  const a = ARCANA;
+  const arc = (n) => n ? `${n} — ${a[n].n} (${a[n].k})` : '—';
+
+  const compositeData = `ПАРТНЁРСКИЙ ПОРТРЕТ: ${name1} и ${name2}
+${name1}: ${d1}.${m1}.${y1}
+${name2}: ${d2}.${m2}.${y2}
+
+ПОЗИЦИИ ПАРТНЁРСКОГО ПОРТРЕТА (КОМПОЗИТ):
+1. Начало знакомства/отношений:          ${arc(comp[1])}
+2. Развитие отношений:                   ${arc(comp[2])}
+3. Период упадка или окончания:          ${arc(comp[3])}
+4. Трудности и проблемы (ключевая):      ${arc(comp[4])}
+5. Общие стремления и планы:             ${arc(comp[5])}
+6. Как развиваются и как преодолеть п.4: ${arc(comp[6])}
+7а. Задача этих отношений (почему встретились): ${arc(comp['7a'])}
+8. Как выполнить эту задачу:             ${arc(comp[8])}
+
+ПОРТРЕТ ${name1.toUpperCase()} (ключевые позиции):
+1: ${arc(pA[1])} | 2: ${arc(pA[2])} | 4: ${arc(pA[4])} | 5: ${arc(pA[5])} | 6: ${arc(pA[6])} | 7а: ${arc(pA['7a'])} | 8: ${arc(pA[8])}
+
+ПОРТРЕТ ${name2.toUpperCase()} (ключевые позиции):
+1: ${arc(pB[1])} | 2: ${arc(pB[2])} | 4: ${arc(pB[4])} | 5: ${arc(pB[5])} | 6: ${arc(pB[6])} | 7а: ${arc(pB['7a'])} | 8: ${arc(pB[8])}
+
+СОВПАДАЮЩИЕ КАРТЫ В ОБОИХ ПОРТРЕТАХ: ${shared.length > 0 ? shared.map(n=>a[n].n).join(', ') : 'отсутствуют'}`;
+
+  const REL_CONTEXT = {
+    friendship: {
+      label: 'Дружба',
+      intro: 'Анализируй через призму дружеских отношений: доверие, поддержка, общие интересы, взаимопонимание.',
+      p1: 'как возникло притяжение и первый контакт в дружбе',
+      p2: 'как развивается дружба, что её укрепляет',
+      p3: 'что может охладить или завершить дружбу',
+      p4: 'главное противоречие и точка напряжения в дружбе',
+      p5: 'общие ценности, интересы и цели, которые объединяют',
+      p6: 'как преодолеть трудности и что поддерживает дружбу',
+      p7: 'зачем эти люди появились в жизни друг друга, какой урок несёт эта дружба',
+      p8: 'как реализовать потенциал этих отношений',
+      strong: 'Сильные стороны дружбы',
+      grow: 'Зоны роста',
+    },
+    partnership: {
+      label: 'Партнёрство',
+      intro: 'Анализируй через призму делового или рабочего партнёрства: совместные проекты, разделение ролей, эффективность, цели.',
+      p1: 'как началось сотрудничество, что привлекло друг в друге как партнёров',
+      p2: 'как развивается деловое взаимодействие, кто и что привносит',
+      p3: 'когда и почему партнёрство может исчерпать себя',
+      p4: 'главный деловой конфликт: разные подходы, приоритеты или стили работы',
+      p5: 'общие деловые цели и стремления',
+      p6: 'как продуктивно разрешать противоречия и выстраивать работу',
+      p7: 'в чём смысл этого союза, какую общую задачу они способны решить',
+      p8: 'как реализовать деловой потенциал пары',
+      strong: 'Сильные стороны партнёрства',
+      grow: 'Риски и зоны роста',
+    },
+    love: {
+      label: 'Любовь',
+      intro: 'Анализируй через призму романтических отношений: влечение, близость, эмоциональная связь, совместная жизнь.',
+      p1: 'как возникло притяжение, каким было начало романтической истории',
+      p2: 'как развиваются отношения, что их питает и углубляет',
+      p3: 'что может привести к охлаждению или завершению отношений',
+      p4: 'главная зона напряжения в паре — эмоционально и конкретно',
+      p5: 'общие мечты, жизненные планы и ценности',
+      p6: 'как сохранить любовь и преодолеть кризисы',
+      p7: 'зачем эти люди встретились, какой глубинный смысл в этом союзе',
+      p8: 'как построить глубокие и счастливые отношения',
+      strong: 'Сильные стороны союза',
+      grow: 'Зоны уязвимости',
+    },
+  };
+
+  const rel = REL_CONTEXT[_cpRelType];
+
+  const systemPrompt = `Ты — эксперт по партнёрским портретам Таро по методике Хшановской. Создаёшь анализ совместимости двух людей.
+
+ТИП ОТНОШЕНИЙ: ${rel.label}
+${rel.intro}
+
+ПРИНЦИПЫ:
+— Карты, присутствующие в обоих портретах — реализуются с особой силой
+— Позиция 4 — главная зона трудностей: уделяй ей особое внимание
+— Совпадение на позиции 7а — общая задача, сильное соответствие партнёров
+— Нет совпадений — возможно дополнение по принципу противоположностей
+— Обращайся к обоим по имени, никогда обезличенно
+
+СТРУКТУРА (markdown ##):
+
+## Общий характер отношений
+Суть пары через ключевые карты — 2–3 предложения с учётом типа: ${rel.label}
+
+## Начало
+Позиция 1 — ${rel.p1}
+
+## Развитие и динамика
+Позиция 2 — ${rel.p2}
+
+## Главный вызов
+Позиция 4 — ${rel.p4}; конкретно и честно
+
+## Путь вперёд
+Позиция 6 — ${rel.p6}
+
+## Что объединяет
+Позиция 5 — ${rel.p5}
+
+## Зачем они встретились
+Позиция 7а — ${rel.p7}
+
+## Как реализовать это
+Позиция 8 — ${rel.p8}
+
+## Совпадающие темы
+Общие карты обоих портретов — что усиливают в этих отношениях
+
+## ${rel.strong} (список 3–4 пункта)
+
+## ${rel.grow} (список 2–3 пункта)
+
+Живой язык, конкретика, никаких общих фраз.`;
+
+  try {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514', max_tokens:2500,
+        system: systemPrompt,
+        messages:[{role:'user', content:`Создай партнёрский портрет.
+
+${compositeData}`}]
+      })
+    });
+    const json = await res.json();
+    const text = json.content?.[0]?.text || 'Не удалось создать портрет совместимости.';
+
+    document.getElementById('cp-names-badge').textContent = `${name1} · ${name2}  ·  ${rel.label}`;
+    document.getElementById('cp-result-text').innerHTML = `<p>${mdToHtml(text)}</p>`;
+    showScreen('screen-compat-result');
+  } catch(e) {
+    document.getElementById('cp-result-text').innerHTML = `<p style="color:#f08">${e.message}</p>`;
+    showScreen('screen-compat-result');
+  }
+}
+window.cpCalculate = cpCalculate;
+
+// ═══════════════ INIT ═══════════════
+loadProfile();
+</script>
+</body>
+</html>
