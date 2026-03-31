@@ -1981,10 +1981,11 @@ H (деструкция): конкретное деструктивное пов
 Одна фраза-архетип — ёмко и точно`;
 
   try {
-    // Switch to loading → result screen immediately to show streaming
+    // Show result screen immediately with loading placeholder
     stopCardAnim();
     showScreen('screen-portrait-result');
-    document.getElementById('p-result-text').innerHTML = '<p style="color:var(--muted);font-size:13px;animation:pulse 1.8s ease-in-out infinite">Stellar формирует твой портрет…</p>';
+    document.getElementById('p-result-text').innerHTML =
+      '<p style="color:var(--muted);font-size:13px;animation:pulse 1.8s ease-in-out infinite">✦ Stellar формирует твой портрет…</p>';
     document.getElementById('p-save-wrap').innerHTML = '';
     document.getElementById('p-save-notice').style.display = 'none';
     document.getElementById('p-my-portraits-btn').style.display = 'none';
@@ -1993,62 +1994,48 @@ H (деструкция): конкретное деструктивное пов
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:4000,
-        stream: true,
         system: systemPrompt,
         messages:[{role:'user', content:`Создай психологический портрет по методике Хшановской.\n\n${data}`}]
       })
     });
+    const json = await res.json();
+    const fullText = json.content?.[0]?.text || 'Не удалось получить портрет.';
+    window._appState.portraitText = fullText;
 
-    if (!res.ok || !res.body) {
-      const json = await res.json();
-      showPortraitResult(json.content?.[0]?.text || 'Ошибка сервера');
+    // Typewriter reveal — word by word
+    typewriterReveal(document.getElementById('p-result-text'), fullText, () => {
+      showPortraitResultButtons();
+    });
+
+  } catch(e) {
+    showPortraitResult('Ошибка: ' + e.message);
+  }
+}
+
+// Typewriter word-by-word reveal
+function typewriterReveal(box, fullText, onDone) {
+  const words = fullText.split(/(\s+)/); // split keeping spaces
+  let i = 0;
+  let revealed = '';
+  const DELAY = 18; // ms per word — feels like ~800 tokens/min
+
+  function step() {
+    if (i >= words.length) {
+      // Final clean render
+      box.innerHTML = `<p>${mdToHtml(fullText)}</p>`;
+      if (onDone) onDone();
       return;
     }
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let fullText = '';
-    const box = document.getElementById('p-result-text');
-
-    while (true) {
-      const {done, value} = await reader.read();
-      if (done) break;
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-      for (const line of lines) {
-        if (!line.startsWith('data: ')) continue;
-        const data2 = line.slice(6).trim();
-        if (data2 === '[DONE]') continue;
-        try {
-          const parsed = JSON.parse(data2);
-          const delta = parsed.delta?.text || parsed.choices?.[0]?.delta?.content || '';
-          if (delta) {
-            fullText += delta;
-            box.innerHTML = `<p>${mdToHtml(fullText)}</p>`;
-            // Auto-scroll
-            box.scrollIntoView({behavior:'smooth', block:'end'});
-          }
-        } catch {}
-      }
+    // Reveal in chunks of 2 words for smoother feel
+    for (let c = 0; c < 2 && i < words.length; c++, i++) {
+      revealed += words[i];
     }
-    // Final render
-    window._appState.portraitText = fullText || 'Портрет готов.';
-    showPortraitResultButtons();
-  } catch(e) {
-    // Fallback to non-streaming if worker doesn't support it
-    try {
-      const res2 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({
-          model:'claude-sonnet-4-20250514', max_tokens:4000,
-          system: systemPrompt,
-          messages:[{role:'user', content:`Создай психологический портрет по методике Хшановской.\n\n${data}`}]
-        })
-      });
-      const json = await res2.json();
-      showPortraitResult(json.content?.[0]?.text || 'Не удалось получить портрет.');
-    } catch(e2) { showPortraitResult('Ошибка: ' + e2.message); }
+    box.innerHTML = `<p>${mdToHtml(revealed)}</p>`;
+    // Scroll to bottom
+    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
+    setTimeout(step, DELAY);
   }
+  step();
 }
 
 function mdToHtml(text) {
