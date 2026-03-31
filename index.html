@@ -930,50 +930,76 @@ svg { display:block; }
   screen-compat-loading
 ══════════════════════════════════════════════ -->
 <div id="screen-compat-loading" class="screen">
-  <div style="display:flex;flex-direction:column;align-items:center;padding:4rem 1.5rem 2rem">
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"
-         style="width:100%;max-width:260px;margin-bottom:2rem;overflow:visible">
-      <!-- Stars background -->
-      <circle cx="20"  cy="30"  r=".8" fill="rgba(232,230,240,0.3)"/>
-      <circle cx="180" cy="25"  r=".6" fill="rgba(232,230,240,0.2)"/>
-      <circle cx="170" cy="170" r=".9" fill="rgba(232,230,240,0.25)"/>
-      <circle cx="15"  cy="160" r=".7" fill="rgba(232,230,240,0.2)"/>
-      <circle cx="100" cy="10"  r=".5" fill="rgba(232,230,240,0.15)"/>
-      <circle cx="190" cy="100" r=".6" fill="rgba(232,230,240,0.2)"/>
-      <!-- Orbit rings -->
-      <ellipse cx="100" cy="100" rx="60" ry="25" fill="none" stroke="rgba(155,143,207,0.2)" stroke-width="1" transform="rotate(-20,100,100)"/>
-      <ellipse cx="100" cy="100" rx="60" ry="25" fill="none" stroke="rgba(201,180,106,0.2)" stroke-width="1" transform="rotate(20,100,100)"/>
-      <!-- Centre star -->
-      <circle cx="100" cy="100" r="5" fill="#9b8fcf" opacity="0.7"/>
-      <circle cx="100" cy="100" r="8" fill="none" stroke="#9b8fcf" stroke-width=".8" opacity="0.3"/>
-      <!-- Planet A (purple) orbiting -->
-      <g id="cp-planet-a">
-        <circle cx="0" cy="0" r="7" fill="#9b8fcf" opacity="0.85"/>
-        <circle cx="0" cy="0" r="11" fill="none" stroke="#9b8fcf" stroke-width=".6" opacity="0.3"/>
-      </g>
-      <!-- Planet B (gold) orbiting -->
-      <g id="cp-planet-b">
-        <circle cx="0" cy="0" r="7" fill="#c9b46a" opacity="0.85"/>
-        <circle cx="0" cy="0" r="11" fill="none" stroke="#c9b46a" stroke-width=".6" opacity="0.3"/>
-      </g>
-    </svg>
-    <div class="tc-load-text">Строим партнёрский портрет…</div>
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5rem 1.5rem 2rem">
+
+    <div class="cp-anim-wrap">
+      <!-- Left circle (purple) -->
+      <div class="cp-circle cp-circle-left">
+        <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="22" r="20" fill="none" stroke="#9b8fcf" stroke-width="1.2"/>
+          <path d="M22 8 L23.5 18 L29 13 L26 19 L34 15 L28 22 L34 29 L26 25 L29 31 L23.5 26 L22 36 L20.5 26 L15 31 L18 25 L10 29 L16 22 L10 15 L18 19 L15 13 L20.5 18 Z"
+                fill="none" stroke="#9b8fcf" stroke-width=".8" opacity=".6"/>
+          <circle cx="22" cy="22" r="3" fill="#9b8fcf" opacity=".7"/>
+        </svg>
+      </div>
+
+      <!-- Overlap glow (centre) -->
+      <div class="cp-overlap-glow"></div>
+
+      <!-- Right circle (gold) -->
+      <div class="cp-circle cp-circle-right">
+        <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="22" r="20" fill="none" stroke="#c9b46a" stroke-width="1.2"/>
+          <path d="M22 8 L23.5 18 L29 13 L26 19 L34 15 L28 22 L34 29 L26 25 L29 31 L23.5 26 L22 36 L20.5 26 L15 31 L18 25 L10 29 L16 22 L10 15 L18 19 L15 13 L20.5 18 Z"
+                fill="none" stroke="#c9b46a" stroke-width=".8" opacity=".6"/>
+          <circle cx="22" cy="22" r="3" fill="#c9b46a" opacity=".7"/>
+        </svg>
+      </div>
+    </div>
+
+    <div class="tc-load-text" style="margin-top:2rem">Строим партнёрский портрет…</div>
   </div>
 </div>
 
 <style>
-/* Planet A: elliptical orbit, -20deg tilt, 6s */
-@keyframes cp-orbit-a {
-  0%   { transform: translate(100px,100px) rotate(0deg)   translate(60px,0) rotate(0deg)   rotate(-20deg); }
-  100% { transform: translate(100px,100px) rotate(360deg) translate(60px,0) rotate(-360deg) rotate(-20deg); }
+.cp-anim-wrap {
+  position: relative;
+  width: 160px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-/* Planet B: opposite orbit, +20deg tilt, 9s (different speed = interesting) */
-@keyframes cp-orbit-b {
-  0%   { transform: translate(100px,100px) rotate(180deg) translate(60px,0) rotate(-180deg) rotate(20deg); }
-  100% { transform: translate(100px,100px) rotate(540deg) translate(60px,0) rotate(-540deg) rotate(20deg); }
+.cp-circle {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  opacity: .85;
 }
-#cp-planet-a { animation: cp-orbit-a 6s linear infinite; transform-origin: 0 0; }
-#cp-planet-b { animation: cp-orbit-b 9s linear infinite; transform-origin: 0 0; }
+.cp-circle-left  { animation: cp-move-left  3s ease-in-out infinite; }
+.cp-circle-right { animation: cp-move-right 3s ease-in-out infinite; }
+
+@keyframes cp-move-left {
+  0%, 100% { transform: translateX(-42px); }
+  50%       { transform: translateX(-10px); }
+}
+@keyframes cp-move-right {
+  0%, 100% { transform: translateX(42px); }
+  50%       { transform: translateX(10px); }
+}
+
+.cp-overlap-glow {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(180,160,220,0.25) 0%, transparent 70%);
+  animation: cp-glow-pulse 3s ease-in-out infinite;
+}
+@keyframes cp-glow-pulse {
+  0%, 100% { opacity: 0;   transform: scale(.5); }
+  50%       { opacity: 1;   transform: scale(1.2); }
+}
 </style>
 
 <!-- ══════════════════════════════════════════════
@@ -1483,7 +1509,10 @@ function renderHomeTile() {
   const asc   = getAscendantFromProfile(prof);
 
   tile.innerHTML = `
-    <div class="tp-name">${prof.name}</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.2rem">
+      <div class="tp-name">${prof.name}</div>
+      <div style="font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:${ {'free':'var(--muted)','basic':'#7ba7c2','pro':'#c9b46a'}[window._appState.subscription]||'var(--muted)' };background:rgba(255,255,255,0.05);border:1px solid ${ {'free':'rgba(255,255,255,0.1)','basic':'#7ba7c2','pro':'#c9b46a'}[window._appState.subscription]||'rgba(255,255,255,0.1)' };border-radius:20px;padding:4px 10px;white-space:nowrap;margin-top:8px">${ {'free':'Бесплатно','basic':'Базовый','pro':'Про'}[window._appState.subscription]||'Бесплатно' }</div>
+    </div>
     <div class="tp-date">${formatBirthLine(prof)}</div>
     <div class="tp-moon-row">
       <div class="tp-moon-icon">${moon.phaseEmoji}</div>
