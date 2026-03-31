@@ -146,6 +146,19 @@ html,body { background:var(--bg); color:var(--text); font-family:'Jost',sans-ser
 }
 .tile-nav:hover { border-color:var(--ba); background:rgba(155,143,207,.04); }
 .tile-nav:active { transform:scale(.98); }
+.tile-nav.tile-locked { opacity:.55; }
+.tile-nav.tile-locked:hover { border-color:var(--border); background:var(--surface); }
+.tile-lock-badge {
+  margin-top:auto;
+  display:flex;
+  align-items:center;
+  gap:5px;
+  font-size:11px;
+  color:var(--muted);
+  letter-spacing:.06em;
+  padding-top:6px;
+  border-top:1px solid var(--border);
+}
 .tile-icon { font-size:22px; line-height:1; }
 .tile-title { font-family:'Cormorant Garamond',serif; font-size:19px; font-weight:400; color:var(--text); line-height:1.3; }
 .tile-sub { font-size:12px; color:var(--muted); letter-spacing:.06em; margin-top:auto; }
@@ -337,6 +350,10 @@ svg { display:block; }
       <span><span class="user-label">Вы вошли:</span><span class="user-email" id="u-email"></span></span>
       <button class="s-btn" style="width:auto;padding:6px 14px;margin:0;font-size:11px" onclick="doLogout()">Выйти</button>
     </div>
+    <div class="user-row" style="margin-bottom:.6rem">
+      <span style="color:var(--muted);font-size:12px;letter-spacing:.06em">Тариф:</span>
+      <span id="u-sub-badge" style="color:var(--accent);font-size:13px"></span>
+    </div>
     <button class="s-btn primary" onclick="goHome()">Открыть Stellar</button>
   </div>
 </div>
@@ -357,13 +374,15 @@ svg { display:block; }
       <div class="tile-icon">☀︎</div>
       <div class="tile-title">Портрет дня</div>
       <div class="tile-sub" id="tile-dp-sub">Композит твоего портрета и портрета сегодняшнего дня</div>
+      <div class="tile-lock-badge" style="display:none"><span>🔒</span><span>Базовый</span></div>
     </div>
 
     <!-- Forecast -->
-    <div class="tile-nav" onclick="goToWeek()">
+    <div class="tile-nav" id="tile-week" onclick="goToWeek()">
       <div class="tile-icon">🌙</div>
       <div class="tile-title">Прогноз<br>на неделю</div>
       <div class="tile-sub">Карты состояния</div>
+      <div class="tile-lock-badge" style="display:none"><span>🔒</span><span>Базовый</span></div>
     </div>
 
     <!-- New portrait -->
@@ -374,24 +393,27 @@ svg { display:block; }
     </div>
 
     <!-- Schema positions -->
-    <div class="tile-nav" onclick="goToSchema()">
+    <div class="tile-nav" id="tile-schema" onclick="goToSchema()">
       <div class="tile-icon">⬡</div>
       <div class="tile-title">Расчёт<br>позиций</div>
       <div class="tile-sub">Схема по дате рождения</div>
+      <div class="tile-lock-badge" style="display:none"><span>🔒</span><span>Про</span></div>
     </div>
 
     <!-- Compatibility -->
-    <div class="tile-nav" onclick="goToCompat()">
+    <div class="tile-nav" id="tile-compat" onclick="goToCompat()">
       <div class="tile-icon">◈</div>
       <div class="tile-title">Совмести-<br>мость</div>
       <div class="tile-sub">Партнёрский портрет</div>
+      <div class="tile-lock-badge" style="display:none"><span>🔒</span><span>Про</span></div>
     </div>
 
     <!-- My portraits -->
-    <div class="tile-nav" style="grid-column:1/-1" onclick="showMyPortraits()">
+    <div class="tile-nav" style="grid-column:1/-1" id="tile-my-portraits" onclick="showMyPortraits()">
       <div class="tile-icon">📜</div>
       <div class="tile-title">Мои портреты</div>
       <div class="tile-sub">Сохранённые разборы</div>
+      <div class="tile-lock-badge" style="display:none"><span>🔒</span><span>Базовый</span></div>
     </div>
 
   </div>
@@ -873,11 +895,19 @@ svg { display:block; }
   <button class="s-btn" onclick="goHome()">На главную</button>
 </div>
 
+<!-- ══════════════════════════════════════════════
+  screen-upgrade
+══════════════════════════════════════════════ -->
+<div id="screen-upgrade" class="screen">
+  <div id="upgrade-screen-content"></div>
+  <button class="s-btn" onclick="goHome()">На главную</button>
+</div>
+
 <!-- ── FIREBASE ── -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, deleteDoc, doc, query, where, getDocs, orderBy, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, query, where, getDocs, orderBy, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const app = initializeApp({
   apiKey:"AIzaSyBu0EZflwyouEZgBbCwkaKv-1t5YGqa5Uo",
@@ -892,7 +922,7 @@ const db   = getFirestore(app);
 
 window._fbAuth = auth;
 window._fbDb   = db;
-window._fb = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, deleteDoc, doc, query, where, getDocs, orderBy, Timestamp };
+window._fb = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, deleteDoc, doc, getDoc, setDoc, query, where, getDocs, orderBy, Timestamp };
 
 onAuthStateChanged(auth, (user) => {
   window._appState.firebaseUser = user;
@@ -907,7 +937,8 @@ onAuthStateChanged(auth, (user) => {
 window._appState = {
   firebaseUser: null,
   isGuest: false,
-  profile: null,       // loaded from localStorage
+  subscription: 'free',   // 'free' | 'basic' | 'pro'
+  profile: null,
   portraitData: { name:'', gender:'male', day:0, month:0, year:0 },
   portraitText: '',
   portraitSaved: false,
@@ -917,6 +948,78 @@ window._appState = {
 
 const PROFILE_KEY = 'stellar_profile_v1';
 const MAX_PORTRAITS = 3;
+
+// ═══════════════ SUBSCRIPTION ═══════════════
+const TIERS = { free:0, basic:1, pro:2 };
+const TIER_NAMES = { free:'Бесплатно', basic:'Базовый', pro:'Про' };
+const TIER_FEATURES = {
+  basic: ['Портрет дня', 'Прогноз на неделю', 'Мои портреты (сохранение)'],
+  pro:   ['Расчёт позиций', 'Совместимость'],
+};
+
+function getSub() { return window._appState.subscription || 'free'; }
+
+function hasAccess(requiredTier) {
+  const cur = getSub();
+  return TIERS[cur] >= TIERS[requiredTier];
+}
+
+async function loadSubscription(uid) {
+  try {
+    const ref = window._fb.doc(window._fbDb, 'users', uid);
+    const snap = await window._fb.getDoc(ref);
+    if (snap.exists()) {
+      window._appState.subscription = snap.data().subscription || 'free';
+    } else {
+      // Create user doc with free tier
+      await window._fb.setDoc(ref, { subscription: 'free', email: window._appState.firebaseUser?.email || '' });
+      window._appState.subscription = 'free';
+    }
+  } catch(e) {
+    window._appState.subscription = 'free';
+  }
+  renderHomeTile();
+  renderHomeGrid();
+  const badge = document.getElementById('u-sub-badge');
+  if (badge) badge.textContent = TIER_NAMES[window._appState.subscription] || 'Бесплатно';
+}
+
+function showUpgradeScreen(requiredTier) {
+  const feats = TIER_FEATURES[requiredTier] || [];
+  const el = document.getElementById('upgrade-screen-content');
+  el.innerHTML = `
+    <div style="font-size:36px;margin-bottom:1rem;text-align:center">✦</div>
+    <div class="screen-title" style="margin:0 0 .5rem">Нужен тариф «${TIER_NAMES[requiredTier]}»</div>
+    <p style="text-align:center;font-size:14px;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">
+      Эта функция доступна начиная с тарифа <strong style="color:var(--accent)">${TIER_NAMES[requiredTier]}</strong>
+    </p>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.2rem;margin-bottom:1.5rem">
+      <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.8rem">Доступно на этом тарифе:</div>
+      ${feats.map(f=>`<div style="font-size:14px;color:var(--text);padding:4px 0;display:flex;align-items:center;gap:8px"><span style="color:var(--accent)">✓</span>${f}</div>`).join('')}
+    </div>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:1.2rem">Для смены тарифа обратитесь к администратору</p>
+  `;
+  showScreen('screen-upgrade');
+}
+
+function renderHomeGrid() {
+  // Update tile lock states
+  const tiles = {
+    'tile-day-portrait': 'basic',
+    'tile-week': 'basic',
+    'tile-my-portraits': 'basic',
+    'tile-schema': 'pro',
+    'tile-compat': 'pro',
+  };
+  Object.entries(tiles).forEach(([id, req]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const locked = !hasAccess(req);
+    el.classList.toggle('tile-locked', locked);
+    const badge = el.querySelector('.tile-lock-badge');
+    if (badge) badge.style.display = locked ? 'flex' : 'none';
+  });
+}
 
 // ═══════════════ NAVIGATION ═══════════════
 function showScreen(id, pushStack) {
@@ -934,6 +1037,7 @@ window.showScreen = showScreen;
 function goHome() {
   window._appState.screenStack = [];
   renderHomeTile();
+  renderHomeGrid();
   showScreen('screen-home', false);
 }
 window.goHome = goHome;
@@ -958,6 +1062,7 @@ function goToProfile() {
 window.goToProfile = goToProfile;
 
 function goToWeek() {
+  if (!hasAccess('basic')) { showUpgradeScreen('basic'); return; }
   resetForecast();
   updateNatalBadge();
   showScreen('screen-week');
@@ -986,10 +1091,12 @@ window._onAuthChange = function(user) {
     formWrap.style.display = 'none';
     infoWrap.style.display = 'block';
     document.getElementById('u-email').textContent = user.email;
+    loadSubscription(user.uid);
     // Auto-go home if on auth screen
     const cur = document.querySelector('.screen.active');
     if (cur && cur.id === 'screen-auth') goHome();
   } else {
+    window._appState.subscription = 'free';
     formWrap.style.display = 'block';
     infoWrap.style.display = 'none';
   }
@@ -1018,6 +1125,7 @@ async function doLogout() {
   try {
     await window._fb.signOut(window._fbAuth);
     window._appState.isGuest = false;
+    window._appState.subscription = 'free';
     window._appState.screenStack = [];
     showScreen('screen-auth', false);
   }
@@ -1742,7 +1850,7 @@ function showPortraitResult(text) {
 
   const user = window._appState.firebaseUser;
   const saveWrap = document.getElementById('p-save-wrap');
-  if (user && !window._appState.isGuest) {
+  if (user && !window._appState.isGuest && hasAccess('basic')) {
     saveWrap.innerHTML = '<button class="s-btn" onclick="savePortrait()">Сохранить портрет</button>';
     document.getElementById('p-my-portraits-btn').style.display = 'block';
   } else {
@@ -1832,6 +1940,7 @@ async function deletePortrait(docId, event) {
 window.deletePortrait = deletePortrait;
 
 async function showMyPortraits() {
+  if (!hasAccess('basic')) { showUpgradeScreen('basic'); return; }
   const user = window._appState.firebaseUser;
   if (!user && !window._appState.isGuest) return alert('Войди в систему');
   if (!user) { alert('Сохранение доступно только для зарегистрированных пользователей'); return; }
@@ -2026,6 +2135,7 @@ function calcComposite(portA, portB) {
 }
 
 async function goToDayPortrait() {
+  if (!hasAccess('basic')) { showUpgradeScreen('basic'); return; }
   const prof = window._appState.profile;
 
   // Guest or no profile — show info
@@ -2167,6 +2277,7 @@ window.refreshDayPortrait = refreshDayPortrait;
 
 // ═══════════════ SCHEMA (РАСЧЁТ ПОЗИЦИЙ) ═══════════════
 function goToSchema() {
+  if (!hasAccess('pro')) { showUpgradeScreen('pro'); return; }
   showScreen('screen-schema-form');
 }
 window.goToSchema = goToSchema;
@@ -2320,7 +2431,7 @@ function scReset() {
 window.scReset = scReset;
 
 // ═══════════════ COMPATIBILITY ═══════════════
-function goToCompat() { showScreen('screen-compat-form'); }
+function goToCompat() { if (!hasAccess('pro')) { showUpgradeScreen('pro'); return; } showScreen('screen-compat-form'); }
 window.goToCompat = goToCompat;
 
 let _cpRelType = 'friendship';
