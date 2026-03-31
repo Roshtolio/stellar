@@ -652,7 +652,7 @@ svg { display:block; }
       <div class="tc"><div class="tc-inner" id="tc1"><div class="tc-face tc-back"><svg width="26" height="26" viewBox="0 0 30 30"><path d="M15 3 L16.5 13 L22 8 L19 14 L27 10 L21 15 L27 20 L19 16 L22 22 L16.5 17 L15 27 L13.5 17 L8 22 L11 16 L3 20 L9 15 L3 10 L11 14 L8 8 L13.5 13 Z" fill="none" stroke="#9b8fcf" stroke-width="1" opacity=".5"/></svg></div><div class="tc-face tc-front"><img src="" alt=""></div></div></div>
       <div class="tc"><div class="tc-inner" id="tc2"><div class="tc-face tc-back"><svg width="26" height="26" viewBox="0 0 30 30"><path d="M15 3 L16.5 13 L22 8 L19 14 L27 10 L21 15 L27 20 L19 16 L22 22 L16.5 17 L15 27 L13.5 17 L8 22 L11 16 L3 20 L9 15 L3 10 L11 14 L8 8 L13.5 13 Z" fill="none" stroke="#9b8fcf" stroke-width="1" opacity=".5"/></svg></div><div class="tc-face tc-front"><img src="" alt=""></div></div></div>
     </div>
-    <div class="tc-load-text">Stellar читает карты…</div>
+    <div class="tc-load-text" id="portrait-load-status">Stellar читает карты…</div>
   </div>
 </div>
 
@@ -1735,6 +1735,38 @@ const CARD_IMGS = [
 ];
 
 function startCardAnim() {
+  // Rotating status messages
+  const STATUS = [
+    'Рассчитываем позиции…',
+    'Формируем Общий образ…',
+    'Описываем Жизненный путь…',
+    'Расписываем Психику…',
+    'Прописываем Миссию…',
+    'Перечисляем Кармический блок…',
+    'Готовим Теневой портрет…',
+    'Самовосприятие и образ…',
+    'Зона комфорта и дискомфорта…',
+    'Ключевые темы жизни…',
+    'Судьба…',
+    'Сильные стороны…',
+    'Готовим итоговый Портрет…',
+  ];
+  let statusIdx = 0;
+  const statusEl = document.getElementById('portrait-load-status');
+  if (statusEl) statusEl.textContent = STATUS[0];
+
+  function rotateStatus() {
+    if (statusIdx < STATUS.length - 1) {
+      statusIdx++;
+      if (statusEl) statusEl.textContent = STATUS[statusIdx];
+      const t = setTimeout(rotateStatus, 2000);
+      window._appState.cardAnimTimeouts.push(t);
+    }
+    // Last message stays — no more rotations
+  }
+  const t0 = setTimeout(rotateStatus, 2000);
+  window._appState.cardAnimTimeouts.push(t0);
+
   function cycle() {
     // Reshuffle images every cycle
     const shuffle = [...CARD_IMGS].sort(()=>Math.random()-.5);
@@ -1991,47 +2023,10 @@ H (деструкция): конкретное деструктивное пов
     });
     const json = await res.json();
     const fullText = json.content?.[0]?.text || 'Не удалось получить портрет.';
-    window._appState.portraitText = fullText;
-
-    // Stop animation, switch screen, then typewriter reveal
-    stopCardAnim();
-    showScreen('screen-portrait-result');
-    document.getElementById('p-save-wrap').innerHTML = '';
-    document.getElementById('p-save-notice').style.display = 'none';
-    document.getElementById('p-my-portraits-btn').style.display = 'none';
-
-    typewriterReveal(document.getElementById('p-result-text'), fullText, () => {
-      showPortraitResultButtons();
-    });
-
+    showPortraitResult(fullText);
   } catch(e) {
-    stopCardAnim();
     showPortraitResult('Ошибка: ' + e.message);
   }
-}
-
-// Typewriter word-by-word reveal
-function typewriterReveal(box, fullText, onDone) {
-  const words = fullText.split(/(\s+)/);
-  let i = 0;
-  let revealed = '';
-  const DELAY = 8;   // ms per step
-  const CHUNK = 4;   // words per step
-
-  function step() {
-    if (i >= words.length) {
-      box.innerHTML = `<p>${mdToHtml(fullText)}</p>`;
-      if (onDone) onDone();
-      return;
-    }
-    for (let c = 0; c < CHUNK && i < words.length; c++, i++) {
-      revealed += words[i];
-    }
-    box.innerHTML = `<p>${mdToHtml(revealed)}</p>`;
-    window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
-    setTimeout(step, DELAY);
-  }
-  step();
 }
 
 function mdToHtml(text) {
