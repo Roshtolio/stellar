@@ -2268,9 +2268,22 @@ async function generateForecast() {
         system:sysPrompt, messages:[{role:'user',content:'Напиши прогноз на эту неделю.'}]})
     });
     const json = await res.json();
-    const text = json.content?.[0]?.text || 'Не удалось получить прогноз.';
 
     document.getElementById('w-loading').classList.remove('vis');
+
+    if (!res.ok || !json.content?.[0]?.text) {
+      const errMsg = json.error?.message || json.message || `HTTP ${res.status}`;
+      document.getElementById('forecastText').innerHTML = `<p style="color:var(--muted);font-size:14px">Не удалось получить прогноз. Попробуй ещё раз.<br><span style="font-size:11px;opacity:.6">${errMsg}</span></p>`;
+      document.getElementById('moodDot').style.background = t.color;
+      document.getElementById('resultLabel').textContent = t.label;
+      document.getElementById('moonBadge').style.display = 'none';
+      document.getElementById('w-result').classList.add('vis');
+      document.getElementById('week-header-block').style.display = 'none';
+      return;
+    }
+
+    const text = json.content[0].text;
+
     document.getElementById('moodDot').style.background = t.color;
     document.getElementById('resultLabel').textContent  = t.label;
 
