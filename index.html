@@ -503,8 +503,7 @@ svg { display:block; }
   screen-week
 ══════════════════════════════════════════════ -->
 <div id="screen-week" class="screen">
-  <div class="week-header">
-    <div class="w-logo">✦ Stellar</div>
+  <div class="week-header" id="week-header-block">
     <div id="w-natal-wrap" style="display:none">
       <div class="w-natal">☀︎ <span id="w-natal-sign"></span></div>
     </div>
@@ -539,7 +538,57 @@ svg { display:block; }
     </div>
   </div>
 
-  <div class="w-loading" id="w-loading"><div class="w-load-text">Stellar читает неделю…</div></div>
+  <div class="w-loading" id="w-loading">
+  <div style="display:flex;flex-direction:column;align-items:center;padding:2rem 0 1rem">
+    <svg id="moon-phases-svg" viewBox="0 0 240 80" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-width:280px;margin-bottom:1.2rem;overflow:visible">
+      <!-- Stars -->
+      <circle cx="10"  cy="15" r=".7" fill="rgba(232,230,240,0.25)"/>
+      <circle cx="60"  cy="8"  r=".5" fill="rgba(232,230,240,0.2)"/>
+      <circle cx="120" cy="12" r=".6" fill="rgba(232,230,240,0.3)"/>
+      <circle cx="180" cy="6"  r=".5" fill="rgba(232,230,240,0.2)"/>
+      <circle cx="230" cy="18" r=".7" fill="rgba(232,230,240,0.25)"/>
+      <circle cx="35"  cy="65" r=".5" fill="rgba(232,230,240,0.15)"/>
+      <circle cx="200" cy="70" r=".6" fill="rgba(232,230,240,0.2)"/>
+      <!-- Phase 1: new moon -->
+      <g id="mp1" opacity="0">
+        <circle cx="30" cy="40" r="16" fill="#1a1a28"/>
+        <circle cx="30" cy="40" r="16" fill="none" stroke="rgba(155,143,207,0.5)" stroke-width="1"/>
+      </g>
+      <!-- Phase 2: crescent -->
+      <g id="mp2" opacity="0">
+        <circle cx="90" cy="40" r="16" fill="#1a1a28"/>
+        <circle cx="90" cy="40" r="16" fill="none" stroke="rgba(155,143,207,0.4)" stroke-width="1"/>
+        <path d="M90,24 A16,16 0 1,1 90,56 A10,16 0 1,0 90,24" fill="#c8bfee" opacity=".85"/>
+      </g>
+      <!-- Phase 3: half -->
+      <g id="mp3" opacity="0">
+        <circle cx="150" cy="40" r="16" fill="#1a1a28"/>
+        <circle cx="150" cy="40" r="16" fill="none" stroke="rgba(155,143,207,0.4)" stroke-width="1"/>
+        <path d="M150,24 A16,16 0 0,1 150,56 Z" fill="#c8bfee" opacity=".85"/>
+      </g>
+      <!-- Phase 4: full moon -->
+      <g id="mp4" opacity="0">
+        <circle cx="210" cy="40" r="16" fill="#c8bfee" opacity=".9"/>
+        <circle cx="210" cy="40" r="20" fill="none" stroke="rgba(200,191,238,0.3)" stroke-width="2"/>
+        <circle cx="210" cy="40" r="24" fill="none" stroke="rgba(200,191,238,0.15)" stroke-width="2"/>
+      </g>
+    </svg>
+    <div class="w-load-text">Stellar читает неделю…</div>
+  </div>
+</div>
+
+<style>
+@keyframes mp-fade-cycle {
+  0%,100%  { opacity:0; }
+  8%,22%   { opacity:1; }
+  30%      { opacity:0; }
+}
+#mp1 { animation: mp-fade-cycle 4s ease-in-out infinite; animation-delay: 0s; }
+#mp2 { animation: mp-fade-cycle 4s ease-in-out infinite; animation-delay: 1s; }
+#mp3 { animation: mp-fade-cycle 4s ease-in-out infinite; animation-delay: 2s; }
+#mp4 { animation: mp-fade-cycle 4s ease-in-out infinite; animation-delay: 3s; }
+</style>
   <div class="w-result" id="w-result">
     <div class="w-result-header">
       <div class="mood-dot" id="moodDot"></div>
@@ -548,6 +597,7 @@ svg { display:block; }
     <div class="moon-badge" id="moonBadge"></div>
     <div class="forecast-text" id="forecastText"></div>
     <button class="reset-btn" onclick="resetForecast()">← выбрать другую карту</button>
+    <button class="s-btn" style="margin-top:1rem" onclick="goHome()">На главную</button>
   </div>
 </div>
 
@@ -636,7 +686,9 @@ svg { display:block; }
   <div id="dp-date-badge" style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:1.2rem;letter-spacing:.06em"></div>
   <div class="portrait-box" id="dp-result-text"></div>
   <button class="s-btn" onclick="goHome()">На главную</button>
+  <!-- DEV ONLY: uncomment to show refresh button
   <button class="s-btn" style="border-color:rgba(255,255,255,0.1);color:var(--muted);font-size:11px;margin-top:.2rem" onclick="refreshDayPortrait()">↺ Пересоздать портрет дня</button>
+-->
 </div>
 
 <!-- ══════════════════════════════════════════════
@@ -878,11 +930,51 @@ svg { display:block; }
   screen-compat-loading
 ══════════════════════════════════════════════ -->
 <div id="screen-compat-loading" class="screen">
-  <div class="tarot-loading" style="padding-top:6rem">
-    <div style="font-size:32px;margin-bottom:1.5rem;letter-spacing:-.1em;opacity:.7">◈</div>
+  <div style="display:flex;flex-direction:column;align-items:center;padding:4rem 1.5rem 2rem">
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%;max-width:260px;margin-bottom:2rem;overflow:visible">
+      <!-- Stars background -->
+      <circle cx="20"  cy="30"  r=".8" fill="rgba(232,230,240,0.3)"/>
+      <circle cx="180" cy="25"  r=".6" fill="rgba(232,230,240,0.2)"/>
+      <circle cx="170" cy="170" r=".9" fill="rgba(232,230,240,0.25)"/>
+      <circle cx="15"  cy="160" r=".7" fill="rgba(232,230,240,0.2)"/>
+      <circle cx="100" cy="10"  r=".5" fill="rgba(232,230,240,0.15)"/>
+      <circle cx="190" cy="100" r=".6" fill="rgba(232,230,240,0.2)"/>
+      <!-- Orbit rings -->
+      <ellipse cx="100" cy="100" rx="60" ry="25" fill="none" stroke="rgba(155,143,207,0.2)" stroke-width="1" transform="rotate(-20,100,100)"/>
+      <ellipse cx="100" cy="100" rx="60" ry="25" fill="none" stroke="rgba(201,180,106,0.2)" stroke-width="1" transform="rotate(20,100,100)"/>
+      <!-- Centre star -->
+      <circle cx="100" cy="100" r="5" fill="#9b8fcf" opacity="0.7"/>
+      <circle cx="100" cy="100" r="8" fill="none" stroke="#9b8fcf" stroke-width=".8" opacity="0.3"/>
+      <!-- Planet A (purple) orbiting -->
+      <g id="cp-planet-a">
+        <circle cx="0" cy="0" r="7" fill="#9b8fcf" opacity="0.85"/>
+        <circle cx="0" cy="0" r="11" fill="none" stroke="#9b8fcf" stroke-width=".6" opacity="0.3"/>
+      </g>
+      <!-- Planet B (gold) orbiting -->
+      <g id="cp-planet-b">
+        <circle cx="0" cy="0" r="7" fill="#c9b46a" opacity="0.85"/>
+        <circle cx="0" cy="0" r="11" fill="none" stroke="#c9b46a" stroke-width=".6" opacity="0.3"/>
+      </g>
+    </svg>
     <div class="tc-load-text">Строим партнёрский портрет…</div>
   </div>
 </div>
+
+<style>
+/* Planet A: elliptical orbit, -20deg tilt, 6s */
+@keyframes cp-orbit-a {
+  0%   { transform: translate(100px,100px) rotate(0deg)   translate(60px,0) rotate(0deg)   rotate(-20deg); }
+  100% { transform: translate(100px,100px) rotate(360deg) translate(60px,0) rotate(-360deg) rotate(-20deg); }
+}
+/* Planet B: opposite orbit, +20deg tilt, 9s (different speed = interesting) */
+@keyframes cp-orbit-b {
+  0%   { transform: translate(100px,100px) rotate(180deg) translate(60px,0) rotate(-180deg) rotate(20deg); }
+  100% { transform: translate(100px,100px) rotate(540deg) translate(60px,0) rotate(-540deg) rotate(20deg); }
+}
+#cp-planet-a { animation: cp-orbit-a 6s linear infinite; transform-origin: 0 0; }
+#cp-planet-b { animation: cp-orbit-b 9s linear infinite; transform-origin: 0 0; }
+</style>
 
 <!-- ══════════════════════════════════════════════
   screen-compat-result
@@ -1448,8 +1540,13 @@ function renderProfileScreen() {
   const moon  = getMoonAtDate(prof.year, prof.month, prof.day);
   const asc   = getAscendantFromProfile(prof);
 
+  const subLabel = {'free':'Бесплатно','basic':'Базовый','pro':'Про'}[window._appState.subscription] || 'Бесплатно';
+  const subColor = {'free':'var(--muted)','basic':'#7ba7c2','pro':'#c9b46a'}[window._appState.subscription] || 'var(--muted)';
   wrap.innerHTML = `<div class="profile-card">
-    <div class="pc-name">${prof.name}</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:.3rem">
+      <div class="pc-name">${prof.name}</div>
+      <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:${subColor};background:rgba(255,255,255,0.06);border:1px solid ${subColor};border-radius:20px;padding:4px 12px;white-space:nowrap;margin-top:6px">${subLabel}</div>
+    </div>
     <div class="pc-birth">${formatBirthLine(prof)}</div>
     <div class="pc-moon-row">
       <div class="pc-moon-icon">${moon.phaseEmoji}</div>
@@ -1609,14 +1706,14 @@ const CARD_IMGS = [
 ];
 
 function startCardAnim() {
-  const shuffle = [...CARD_IMGS].sort(()=>Math.random()-.5);
-  ['tc0','tc1','tc2'].forEach((id,i) => {
-    const el = document.getElementById(id);
-    el.classList.remove('flipped');
-    el.querySelector('.tc-front img').src = shuffle[i];
-  });
   function cycle() {
-    ['tc0','tc1','tc2'].forEach(id => document.getElementById(id).classList.remove('flipped'));
+    // Reshuffle images every cycle
+    const shuffle = [...CARD_IMGS].sort(()=>Math.random()-.5);
+    ['tc0','tc1','tc2'].forEach((id,i) => {
+      const el = document.getElementById(id);
+      el.classList.remove('flipped');
+      el.querySelector('.tc-front img').src = shuffle[i];
+    });
     [1500,3000,4500].forEach((ms,i) => {
       const t = setTimeout(()=>document.getElementById(['tc0','tc1','tc2'][i]).classList.add('flipped'), ms);
       window._appState.cardAnimTimeouts.push(t);
@@ -1855,17 +1952,74 @@ H (деструкция): конкретное деструктивное пов
 Одна фраза-архетип — ёмко и точно`;
 
   try {
+    // Switch to loading → result screen immediately to show streaming
+    stopCardAnim();
+    showScreen('screen-portrait-result');
+    document.getElementById('p-result-text').innerHTML = '<p style="color:var(--muted);font-size:13px;animation:pulse 1.8s ease-in-out infinite">Stellar формирует твой портрет…</p>';
+    document.getElementById('p-save-wrap').innerHTML = '';
+    document.getElementById('p-save-notice').style.display = 'none';
+    document.getElementById('p-my-portraits-btn').style.display = 'none';
+
     const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         model:'claude-sonnet-4-20250514', max_tokens:4000,
+        stream: true,
         system: systemPrompt,
         messages:[{role:'user', content:`Создай психологический портрет по методике Хшановской.\n\n${data}`}]
       })
     });
-    const json = await res.json();
-    showPortraitResult(json.content?.[0]?.text || 'Не удалось получить портрет.');
-  } catch(e) { showPortraitResult('Ошибка: ' + e.message); }
+
+    if (!res.ok || !res.body) {
+      const json = await res.json();
+      showPortraitResult(json.content?.[0]?.text || 'Ошибка сервера');
+      return;
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let fullText = '';
+    const box = document.getElementById('p-result-text');
+
+    while (true) {
+      const {done, value} = await reader.read();
+      if (done) break;
+      const chunk = decoder.decode(value);
+      const lines = chunk.split('\n');
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data2 = line.slice(6).trim();
+        if (data2 === '[DONE]') continue;
+        try {
+          const parsed = JSON.parse(data2);
+          const delta = parsed.delta?.text || parsed.choices?.[0]?.delta?.content || '';
+          if (delta) {
+            fullText += delta;
+            box.innerHTML = `<p>${mdToHtml(fullText)}</p>`;
+            // Auto-scroll
+            box.scrollIntoView({behavior:'smooth', block:'end'});
+          }
+        } catch {}
+      }
+    }
+    // Final render
+    window._appState.portraitText = fullText || 'Портрет готов.';
+    showPortraitResultButtons();
+  } catch(e) {
+    // Fallback to non-streaming if worker doesn't support it
+    try {
+      const res2 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          model:'claude-sonnet-4-20250514', max_tokens:4000,
+          system: systemPrompt,
+          messages:[{role:'user', content:`Создай психологический портрет по методике Хшановской.\n\n${data}`}]
+        })
+      });
+      const json = await res2.json();
+      showPortraitResult(json.content?.[0]?.text || 'Не удалось получить портрет.');
+    } catch(e2) { showPortraitResult('Ошибка: ' + e2.message); }
+  }
 }
 
 function mdToHtml(text) {
@@ -2126,6 +2280,7 @@ async function generateForecast() {
 
     document.getElementById('forecastText').innerHTML = text.split(/\n+/).filter(p=>p.trim()).map(p=>`<p>${p}</p>`).join('');
     document.getElementById('w-result').classList.add('vis');
+    document.getElementById('week-header-block').style.display = 'none';
   } catch(e) {
     document.getElementById('w-loading').classList.remove('vis');
     document.getElementById('forecastText').innerHTML = `<p style="color:#f08;font-size:13px">${e.message}</p>`;
@@ -2140,6 +2295,7 @@ function resetForecast() {
   document.getElementById('w-loading').classList.remove('vis');
   document.getElementById('moonBadge').style.display = 'none';
   document.getElementById('cardsGrid').style.display = 'grid';
+  document.getElementById('week-header-block').style.display = '';
 }
 window.resetForecast = resetForecast;
 
