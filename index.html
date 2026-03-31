@@ -1981,15 +1981,6 @@ H (деструкция): конкретное деструктивное пов
 Одна фраза-архетип — ёмко и точно`;
 
   try {
-    // Show result screen immediately with loading placeholder
-    stopCardAnim();
-    showScreen('screen-portrait-result');
-    document.getElementById('p-result-text').innerHTML =
-      '<p style="color:var(--muted);font-size:13px;animation:pulse 1.8s ease-in-out infinite">✦ Stellar формирует твой портрет…</p>';
-    document.getElementById('p-save-wrap').innerHTML = '';
-    document.getElementById('p-save-notice').style.display = 'none';
-    document.getElementById('p-my-portraits-btn').style.display = 'none';
-
     const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
@@ -2002,36 +1993,41 @@ H (деструкция): конкретное деструктивное пов
     const fullText = json.content?.[0]?.text || 'Не удалось получить портрет.';
     window._appState.portraitText = fullText;
 
-    // Typewriter reveal — word by word
+    // Stop animation, switch screen, then typewriter reveal
+    stopCardAnim();
+    showScreen('screen-portrait-result');
+    document.getElementById('p-save-wrap').innerHTML = '';
+    document.getElementById('p-save-notice').style.display = 'none';
+    document.getElementById('p-my-portraits-btn').style.display = 'none';
+
     typewriterReveal(document.getElementById('p-result-text'), fullText, () => {
       showPortraitResultButtons();
     });
 
   } catch(e) {
+    stopCardAnim();
     showPortraitResult('Ошибка: ' + e.message);
   }
 }
 
 // Typewriter word-by-word reveal
 function typewriterReveal(box, fullText, onDone) {
-  const words = fullText.split(/(\s+)/); // split keeping spaces
+  const words = fullText.split(/(\s+)/);
   let i = 0;
   let revealed = '';
-  const DELAY = 18; // ms per word — feels like ~800 tokens/min
+  const DELAY = 8;   // ms per step
+  const CHUNK = 4;   // words per step
 
   function step() {
     if (i >= words.length) {
-      // Final clean render
       box.innerHTML = `<p>${mdToHtml(fullText)}</p>`;
       if (onDone) onDone();
       return;
     }
-    // Reveal in chunks of 2 words for smoother feel
-    for (let c = 0; c < 2 && i < words.length; c++, i++) {
+    for (let c = 0; c < CHUNK && i < words.length; c++, i++) {
       revealed += words[i];
     }
     box.innerHTML = `<p>${mdToHtml(revealed)}</p>`;
-    // Scroll to bottom
     window.scrollTo({top: document.body.scrollHeight, behavior: 'smooth'});
     setTimeout(step, DELAY);
   }
