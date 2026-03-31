@@ -907,7 +907,7 @@ svg { display:block; }
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, query, where, getDocs, orderBy, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+import { getFirestore, collection, addDoc, deleteDoc, doc, getDoc, setDoc, updateDoc, query, where, getDocs, orderBy, Timestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
 const app = initializeApp({
   apiKey:"AIzaSyBu0EZflwyouEZgBbCwkaKv-1t5YGqa5Uo",
@@ -922,7 +922,7 @@ const db   = getFirestore(app);
 
 window._fbAuth = auth;
 window._fbDb   = db;
-window._fb = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, deleteDoc, doc, getDoc, setDoc, query, where, getDocs, orderBy, Timestamp };
+window._fb = { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, collection, addDoc, deleteDoc, doc, getDoc, setDoc, updateDoc, query, where, getDocs, orderBy, Timestamp };
 
 onAuthStateChanged(auth, (user) => {
   window._appState.firebaseUser = user;
@@ -969,11 +969,24 @@ async function loadSubscription(uid) {
     const ref = window._fb.doc(window._fbDb, 'users', uid);
     const snap = await window._fb.getDoc(ref);
     if (snap.exists()) {
-      window._appState.subscription = snap.data().subscription || 'free';
+      const data = snap.data();
+      window._appState.subscription = data.subscription || 'free';
+      // Load profile from Firestore
+      if (data.profile) {
+        window._appState.profile = data.profile;
+      } else {
+        window._appState.profile = null;
+      }
     } else {
-      // Create user doc with free tier
-      await window._fb.setDoc(ref, { subscription: 'free', email: window._appState.firebaseUser?.email || '' });
+      // New user — create doc with free tier, empty profile
+      await window._fb.setDoc(ref, {
+        subscription: 'free',
+        email: window._appState.firebaseUser?.email || '',
+        profile: null,
+        createdAt: window._fb.Timestamp.now()
+      });
       window._appState.subscription = 'free';
+      window._appState.profile = null;
     }
   } catch(e) {
     window._appState.subscription = 'free';
@@ -1126,6 +1139,7 @@ async function doLogout() {
     await window._fb.signOut(window._fbAuth);
     window._appState.isGuest = false;
     window._appState.subscription = 'free';
+    window._appState.profile = null;
     window._appState.screenStack = [];
     showScreen('screen-auth', false);
   }
@@ -1139,15 +1153,28 @@ function doSkip() {
 }
 window.doSkip = doSkip;
 
-// ═══════════════ PROFILE DATA ═══════════════
-function loadProfile() {
+// ═══════════════ PROFILE DATA (Firestore) ═══════════════
+async function loadProfile() {
+  const user = window._appState.firebaseUser;
+  if (!user || window._appState.isGuest) {
+    // Guest: try localStorage as fallback
+    try {
+      const raw = localStorage.getItem(PROFILE_KEY);
+      window._appState.profile = raw ? JSON.parse(raw) : null;
+    } catch { window._appState.profile = null; }
+    return;
+  }
   try {
-    const raw = localStorage.getItem(PROFILE_KEY);
-    window._appState.profile = raw ? JSON.parse(raw) : null;
+    const snap = await window._fb.getDoc(window._fb.doc(window._fbDb, 'users', user.uid));
+    if (snap.exists() && snap.data().profile) {
+      window._appState.profile = snap.data().profile;
+    } else {
+      window._appState.profile = null;
+    }
   } catch { window._appState.profile = null; }
 }
 
-function saveProfileData() {
+async function saveProfileData() {
   const name    = document.getElementById('pe-name').value.trim();
   const day     = parseInt(document.getElementById('pe-day').value);
   const month   = parseInt(document.getElementById('pe-month').value);
@@ -1169,8 +1196,19 @@ function saveProfileData() {
     utc:  utc  ? parseFloat(utc) : null,
     country, city
   };
-  localStorage.setItem(PROFILE_KEY, JSON.stringify(prof));
+
   window._appState.profile = prof;
+
+  const user = window._appState.firebaseUser;
+  if (user && !window._appState.isGuest) {
+    try {
+      const ref = window._fb.doc(window._fbDb, 'users', user.uid);
+      await window._fb.updateDoc(ref, { profile: prof });
+    } catch(e) { console.warn('Profile save error:', e.message); }
+  } else {
+    // Guest fallback: localStorage
+    try { localStorage.setItem(PROFILE_KEY, JSON.stringify(prof)); } catch {}
+  }
 
   renderProfileScreen();
   renderHomeTile();
@@ -2627,7 +2665,7 @@ ${compositeData}`}]
 window.cpCalculate = cpCalculate;
 
 // ═══════════════ INIT ═══════════════
-loadProfile();
+// Profile loads via loadSubscription on auth change — no separate call needed
 </script>
 </body>
 </html>
