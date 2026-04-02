@@ -373,7 +373,7 @@ svg { display:block; }
     <div class="tile-nav" style="grid-column:1/-1" id="tile-day-portrait" onclick="goToDayPortrait()">
       <div class="tile-icon">☀︎</div>
       <div class="tile-title">Портрет дня</div>
-      <div class="tile-sub" id="tile-dp-sub">Композит твоего портрета и портрета сегодняшнего дня</div>
+      <div class="tile-sub" id="tile-dp-sub">Персональный прогноз на день</div>
       <div class="tile-lock-badge" style="display:none"><span>🔒</span><span>Базовый</span></div>
     </div>
 
@@ -2174,17 +2174,17 @@ async function generateForecast() {
 Только текст. Без заголовков. Не называй состояние прямо.`;
 
   try {
-    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
-        system:sysPrompt, messages:[{role:'user',content:'Напиши прогноз на эту неделю.'}]})
+      body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1000,
+        messages:[{role:'system',content:sysPrompt},{role:'user',content:'Напиши прогноз на эту неделю.'}]})
     });
     const json = await res.json();
     console.log('[Forecast] status:', res.status, 'body:', JSON.stringify(json).slice(0,200));
 
     document.getElementById('w-loading').classList.remove('vis');
 
-    if (!res.ok || !json.content?.[0]?.text) {
+    if (!res.ok || !json.choices?.[0]?.message?.content) {
       const errMsg = json.error?.message || json.message || `HTTP ${res.status}`;
       console.warn('[Forecast] error:', errMsg);
       document.getElementById('forecastText').innerHTML =
@@ -2198,7 +2198,7 @@ async function generateForecast() {
       return;
     }
 
-    const text = json.content[0].text;
+    const text = json.choices[0].message.content;
 
     document.getElementById('moodDot').style.background = t.color;
     document.getElementById('resultLabel').textContent  = t.label;
@@ -2333,17 +2333,27 @@ G1: ${arc(comp.G1)}
 G2: ${arc(comp.G2)}
 H: ${arc(comp.H)}`;
 
-  const systemPrompt = `Ты — астрологический психолог сервиса Stellar. Создаёшь портрет дня на основе КОМПОЗИТА личного портрета и портрета текущего дня. Обращение на «ты». Пол: ${prof.gender==='male'?'мужской':'женский'}.
+  const systemPrompt = `Ты — астрологический психолог сервиса Stellar. Создаёшь портрет дня на основе КОМПОЗИТА. Обращение на «ты». Пол: ${prof.gender==='male'?'мужской':'женский'}. Язык живой, конкретный. Каждый раздел 2–3 предложения.
 
-Напиши один связный текст без заголовков — 180–220 слов. Живой образный язык. Опирайся на шесть позиций композита в едином повествовании:
-Позиция 1: ${arc(comp[1])}
-Позиция 2: ${arc(comp[2])}
-Позиция 3: ${arc(comp[3])}
-Позиция 4: ${arc(comp[4])}
-Позиция 5: ${arc(comp[5])}
-Позиция 6: ${arc(comp[6])}
+Карты композита:
+Позиция 1: ${arc(comp[1])} — общий образ дня
+Позиция 2: ${arc(comp[4])} — сложные аспекты
+Позиция 3: ${arc(comp[5])} — социальная среда
+Позиция 4: ${arc(comp[6])} — что поможет
 
-Не перечисляй позиции по отдельности. Вплети их смысл в единый образ дня — что несёт этот день, какая энергия доминирует, на что опереться и чего избегать.`;
+Структура ответа (используй ## для заголовков):
+
+## Портрет дня
+Общий образ — какая энергия доминирует, что несёт этот день
+
+## Сложные аспекты
+Что может травмировать, задевать, чего избегать
+
+## Социальная среда
+Окружение, внешний мир, взаимодействия
+
+## Что поможет
+На что опираться в этом дне`;
 
   try {
     const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
