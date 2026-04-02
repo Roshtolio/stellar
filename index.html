@@ -37,8 +37,6 @@ html,body { background:var(--bg); color:var(--text); font-family:'Jost',sans-ser
   align-items:center;
   height:56px;
   max-width:100%;
-  cursor:pointer;
-  touch-action:manipulation;
 }
 .topbar-center { display:flex; align-items:center; justify-content:center; gap:8px; }
 .topbar h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:22px; letter-spacing:.28em; text-transform:uppercase; color:var(--text); }
@@ -303,9 +301,9 @@ svg { display:block; }
 <body>
 
 <!-- ── TOP BAR ── -->
-<header class="topbar" onclick="goHome()">
+<header class="topbar">
   <div></div>
-  <div class="topbar-center">
+  <div class="topbar-center" onclick="goHome()" style="cursor:pointer">
     <svg width="22" height="22" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
       <circle cx="60" cy="60" r="38" fill="none" stroke="#9b8fcf" stroke-width="1" opacity="0.4"/>
       <path d="M60 22 L63 54 L76 34 L69 56 L94 44 L74 60 L94 76 L69 64 L76 86 L63 66 L60 98 L57 66 L44 86 L51 64 L26 76 L46 60 L26 44 L51 56 L44 34 L57 54 Z" fill="none" stroke="#9b8fcf" stroke-width="1.5" opacity="0.8"/>
