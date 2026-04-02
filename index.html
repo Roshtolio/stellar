@@ -18,7 +18,7 @@
   --accent: #9b8fcf;
   --adim: rgba(155,143,207,0.15);
 }
-html,body { background:var(--bg); color:var(--text); font-family:'Jost',sans-serif; font-weight:300; min-height:100vh; -webkit-font-smoothing:antialiased; }
+html,body { background:var(--bg); color:var(--text); font-family:'Jost',sans-serif; font-weight:300; min-height:100vh; -webkit-font-smoothing:antialiased; overflow-x:hidden; -webkit-overflow-scrolling:touch; }
 
 /* ── Screens ── */
 .screen { display:none; max-width:480px; margin:0 auto; padding:0 1.25rem 3rem; animation:fadeUp .3s ease; }
@@ -38,6 +38,7 @@ html,body { background:var(--bg); color:var(--text); font-family:'Jost',sans-ser
   height:56px;
   max-width:100%;
   cursor:pointer;
+  touch-action:manipulation;
 }
 .topbar-center { display:flex; align-items:center; justify-content:center; gap:8px; }
 .topbar h1 { font-family:'Cormorant Garamond',serif; font-weight:300; font-size:22px; letter-spacing:.28em; text-transform:uppercase; color:var(--text); }
