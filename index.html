@@ -1856,16 +1856,18 @@ H. Сфера деструктивных тенденций:                  ${
   // ── Part 1 ──
   updateStatusMessages(STATUS_P1);
   try {
-    const res1 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+    const res1 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1800,
-        system: systemPrompt1,
-        messages:[{role:'user', content:`Создай первую часть психологического портрета.\n\n${data}`}]
+        model:'gpt-4o-mini', max_tokens:1800,
+        messages:[
+          {role:'system', content: systemPrompt1},
+          {role:'user', content:`Создай первую часть психологического портрета.\n\n${data}`}
+        ]
       })
     });
     const json1 = await res1.json();
-    const part1 = json1.content?.[0]?.text || 'Не удалось получить портрет.';
+    const part1 = json1.choices?.[0]?.message?.content || 'Не удалось получить портрет.';
 
     // Show part 1 with "Continue" button
     stopCardAnim();
@@ -1912,16 +1914,18 @@ async function continuePortrait() {
   updateStatusMessages(STATUS_P2);
 
   try {
-    const res2 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+    const res2 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1800,
-        system: systemPrompt2,
-        messages:[{role:'user', content:`Данные для портрета:\n\n${data}\n\nПервая часть портрета уже написана. Напиши только вторую часть.`}]
+        model:'gpt-4o-mini', max_tokens:1800,
+        messages:[
+          {role:'system', content: systemPrompt2},
+          {role:'user', content:`Данные для портрета:\n\n${data}\n\nПервая часть портрета уже написана. Напиши только вторую часть.`}
+        ]
       })
     });
     const json2 = await res2.json();
-    const part2 = json2.content?.[0]?.text || '';
+    const part2 = json2.choices?.[0]?.message?.content || '';
     const fullText = part1 + '\n\n' + part2;
     showPortraitResult(fullText);
   } catch(e) {
@@ -2356,16 +2360,18 @@ H: ${arc(comp.H)}`;
 Каждый раздел: 2–3 предложения, конкретно и образно. Общий объём 180–240 слов. Никаких общих фраз — только то, что реально следует из карты в данной позиции.`;
 
   try {
-    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:1500,
-        system: systemPrompt,
-        messages:[{role:'user', content:`Создай портрет дня.\n\n${compositeData}`}]
+        model:'gpt-4o-mini', max_tokens:1200,
+        messages:[
+          {role:'system', content: systemPrompt},
+          {role:'user', content:`Создай портрет дня.\n\n${compositeData}`}
+        ]
       })
     });
     const json = await res.json();
-    const text = json.content?.[0]?.text || 'Не удалось сформировать портрет дня.';
+    const text = json.choices?.[0]?.message?.content || 'Не удалось сформировать портрет дня.';
 
     // Save locally
     saveDayPortrait({ date: today, text });
