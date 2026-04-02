@@ -27,8 +27,9 @@ html,body { background:var(--bg); color:var(--text); font-family:'Jost',sans-ser
 
 /* ── Top bar ── */
 .topbar {
-  position:static;
+  position:sticky; top:0; z-index:50;
   background:rgba(14,14,20,0.95);
+  backdrop-filter:blur(12px);
   border-bottom:1px solid var(--border);
   padding:0 1.25rem;
   display:grid;
@@ -2332,31 +2333,17 @@ G1: ${arc(comp.G1)}
 G2: ${arc(comp.G2)}
 H: ${arc(comp.H)}`;
 
-  const systemPrompt = `Ты — астрологический психолог сервиса Stellar. Ты создаёшь «портрет дня» на основе КОМПОЗИТА личного портрета человека и портрета текущего дня.
+  const systemPrompt = `Ты — астрологический психолог сервиса Stellar. Создаёшь портрет дня на основе КОМПОЗИТА личного портрета и портрета текущего дня. Обращение на «ты». Пол: ${prof.gender==='male'?'мужской':'женский'}.
 
-Стиль: обращение на «ты». Тон — живой, конкретный, практичный. Пол: ${prof.gender==='male'?'мужской':'женский'}.
+Напиши один связный текст без заголовков — 180–220 слов. Живой образный язык. Опирайся на шесть позиций композита в едином повествовании:
+Позиция 1: ${arc(comp[1])}
+Позиция 2: ${arc(comp[2])}
+Позиция 3: ${arc(comp[3])}
+Позиция 4: ${arc(comp[4])}
+Позиция 5: ${arc(comp[5])}
+Позиция 6: ${arc(comp[6])}
 
-СТРУКТУРА — строго по шести позициям композита (markdown ##):
-
-## Начало дня
-Позиция 1 композита: ${arc(comp[1])} — как начнётся день, с какой энергией войти в утро
-
-## Что ожидает днём
-Позиция 2 композита: ${arc(comp[2])} — основная тема и характер середины дня
-
-## Конец дня
-Позиция 3 композита: ${arc(comp[3])} — чем завершится день, к чему прийти к вечеру
-
-## Сложные аспекты
-Позиция 4 композита: ${arc(comp[4])} — что может травмировать, задевать или мешать; чего избегать
-
-## Социальная среда
-Позиция 5 композита: ${arc(comp[5])} — окружение, внешний мир, социальные взаимодействия дня
-
-## Что поможет
-Позиция 6 композита: ${arc(comp[6])} — на что опираться, что поддержит в течение дня
-
-Каждый раздел: 2–3 предложения, конкретно и образно. Общий объём 180–240 слов. Никаких общих фраз — только то, что реально следует из карты в данной позиции.`;
+Не перечисляй позиции по отдельности. Вплети их смысл в единый образ дня — что несёт этот день, какая энергия доминирует, на что опереться и чего избегать.`;
 
   try {
     const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
@@ -2728,18 +2715,18 @@ ${rel.intro}
 Живой язык, конкретика, никаких общих фраз.`;
 
   try {
-    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/', {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
-        model:'claude-sonnet-4-20250514', max_tokens:2500,
-        system: systemPrompt,
-        messages:[{role:'user', content:`Создай партнёрский портрет.
-
-${compositeData}`}]
+        model:'gpt-4o-mini', max_tokens:2500,
+        messages:[
+          {role:'system', content: systemPrompt},
+          {role:'user', content:`Создай партнёрский портрет.\n\n${compositeData}`}
+        ]
       })
     });
     const json = await res.json();
-    const text = json.content?.[0]?.text || 'Не удалось создать портрет совместимости.';
+    const text = json.choices?.[0]?.message?.content || 'Не удалось создать портрет совместимости.';
 
     document.getElementById('cp-names-badge').textContent = `${name1} · ${name2}  ·  ${rel.label}`;
     document.getElementById('cp-result-text').innerHTML = `<p>${mdToHtml(text)}</p>`;
