@@ -1065,7 +1065,10 @@ window._appState = {
 };
 
 const PROFILE_KEY = 'stellar_profile_v1';
-const MAX_PORTRAITS = 3;
+function getPortraitLimit() {
+  const sub = window._appState.subscription || 'free';
+  return {free: 0, basic: 3, pro: 10}[sub] ?? 0;
+}
 
 // ═══════════════ SUBSCRIPTION ═══════════════
 const TIERS = { free:0, basic:1, pro:2 };
@@ -1322,7 +1325,8 @@ async function saveProfileData() {
     try {
       const ref = window._fb.doc(window._fbDb, 'users', user.uid);
       await window._fb.updateDoc(ref, { profile: prof });
-    } catch(e) { console.warn('Profile save error:', e.message); }
+    } catch(e) {
+ }
   } else {
     // Guest fallback: localStorage
     try { localStorage.setItem(PROFILE_KEY, JSON.stringify(prof)); } catch {}
@@ -1620,6 +1624,29 @@ const ARCANA = {
   21:{n:'Мир',k:'завершение, целостность, достижение'}, 22:{n:'Шут',k:'начало, невинность, свобода'}
 };
 
+
+// ── GPT fetch helper: 45s timeout + unified error ──────────────
+const GPT_ERROR = 'Не получилось сформировать ответ. Включите, пожалуйста, VPN, если он не включён.';
+async function fetchGPT(messages, max_tokens) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  try {
+    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
+      body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens, messages })
+    });
+    const json = await res.json();
+    const text = json.choices?.[0]?.message?.content;
+    if (!text) throw new Error(GPT_ERROR);
+    return text;
+  } catch(e) {
+    throw new Error(e.name === 'AbortError' ? GPT_ERROR : (e.message || GPT_ERROR));
+  } finally {
+    clearTimeout(timer);
+  }
+}
 // ── Reduce to 1–22: subtract 22 while > 22, add 22 while ≤ 0
 function reduce(n) {
   while (n > 22) n -= 22;
@@ -1856,18 +1883,10 @@ H. Сфера деструктивных тенденций:                  ${
   // ── Part 1 ──
   updateStatusMessages(STATUS_P1);
   try {
-    const res1 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'gpt-4o-mini', max_tokens:1800,
-        messages:[
-          {role:'system', content: systemPrompt1},
-          {role:'user', content:`Создай первую часть психологического портрета.\n\n${data}`}
-        ]
-      })
-    });
-    const json1 = await res1.json();
-    const part1 = json1.choices?.[0]?.message?.content || 'Не удалось получить портрет.';
+    const part1 = await fetchGPT([
+      {role:'system', content: systemPrompt1},
+      {role:'user', content:`Создай первую часть психологического портрета.\n\n${data}`}
+    ], 1800);
 
     // Show part 1 with "Continue" button
     stopCardAnim();
@@ -1914,18 +1933,10 @@ async function continuePortrait() {
   updateStatusMessages(STATUS_P2);
 
   try {
-    const res2 = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'gpt-4o-mini', max_tokens:1800,
-        messages:[
-          {role:'system', content: systemPrompt2},
-          {role:'user', content:`Данные для портрета:\n\n${data}\n\nПервая часть портрета уже написана. Напиши только вторую часть.`}
-        ]
-      })
-    });
-    const json2 = await res2.json();
-    const part2 = json2.choices?.[0]?.message?.content || '';
+    const part2 = await fetchGPT([
+      {role:'system', content: systemPrompt2},
+      {role:'user', content:`Данные для портрета:\n\n${data}\n\nПервая часть портрета уже написана. Напиши только вторую часть.`}
+    ], 1800);
     const fullText = part1 + '\n\n' + part2;
     showPortraitResult(fullText);
   } catch(e) {
@@ -1982,9 +1993,11 @@ async function savePortrait() {
   if (window._appState.portraitSaved) return;
   const user = window._appState.firebaseUser;
   if (!user) return alert('Войди чтобы сохранить');
+  const limit = getPortraitLimit();
+  if (limit === 0) { alert('Сохранение портретов доступно с тарифа Базовый'); return; }
   try {
     const existing = await getUserPortraits();
-    if (existing.length >= MAX_PORTRAITS) { showReplaceModal(existing); return; }
+    if (existing.length >= limit) { showReplaceModal(existing); return; }
     await doSavePortrait();
   } catch(e) { alert('Ошибка: '+e.message); }
 }
@@ -2022,7 +2035,7 @@ function showReplaceModal(portraits) {
   ov.className='modal-overlay'; ov.id='replace-modal';
   ov.innerHTML=`<div class="modal-sheet">
     <div class="modal-title">Достигнут лимит портретов</div>
-    <div class="modal-sub">Сохранено ${MAX_PORTRAITS} из ${MAX_PORTRAITS}. Выбери портрет для замены:</div>
+    <div class="modal-sub">Сохранено ${getPortraitLimit()} из ${getPortraitLimit()}. Выбери портрет для замены:</div>
     ${rows}
     <button class="modal-cancel" onclick="closeModal()">Отмена</button>
   </div>`;
@@ -2055,7 +2068,7 @@ async function showMyPortraits() {
   try {
     const portraits = await getUserPortraits();
     if (!portraits.length) { listEl.innerHTML='<p style="color:var(--muted);text-align:center">Портретов пока нет</p>'; return; }
-    const note = `<p style="font-size:11px;color:var(--muted);text-align:right;margin-bottom:12px;letter-spacing:.06em">${portraits.length} / ${MAX_PORTRAITS}</p>`;
+    const note = `<p style="font-size:11px;color:var(--muted);text-align:right;margin-bottom:12px;letter-spacing:.06em">${portraits.length} / ${getPortraitLimit()}</p>`;
     let html = note;
     portraits.forEach(p=>{
       const dt = p.createdAt.toDate ? p.createdAt.toDate() : new Date(p.createdAt.seconds*1000);
@@ -2174,19 +2187,21 @@ async function generateForecast() {
 Только текст. Без заголовков. Не называй состояние прямо.`;
 
   try {
-    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'gpt-4o-mini',max_tokens:1000,
-        messages:[{role:'system',content:sysPrompt},{role:'user',content:'Напиши прогноз на эту неделю.'}]})
-    });
-    const json = await res.json();
-    console.log('[Forecast] status:', res.status, 'body:', JSON.stringify(json).slice(0,200));
+    let json;
+    try {
+      const fcText = await fetchGPT([
+        {role:'system',content:sysPrompt},
+        {role:'user',content:'Напиши прогноз на эту неделю.'}
+      ], 1000);
+      json = {choices:[{message:{content:fcText}}]};
+    } catch(fcErr) {
+      json = {choices:[{message:{content:fcErr.message}}], _error:true};
+    }
 
     document.getElementById('w-loading').classList.remove('vis');
 
-    if (!res.ok || !json.choices?.[0]?.message?.content) {
+    if (json._error) {
       const errMsg = json.error?.message || json.message || `HTTP ${res.status}`;
-      console.warn('[Forecast] error:', errMsg);
       document.getElementById('forecastText').innerHTML =
         `<p style="color:var(--muted);font-size:14px;font-style:normal">Не удалось получить прогноз. Попробуй ещё раз.</p>
          <p style="color:var(--muted);font-size:11px;font-style:normal;opacity:.5;margin-top:.5rem">${errMsg}</p>`;
@@ -2211,7 +2226,6 @@ async function generateForecast() {
     document.getElementById('w-result').classList.add('vis');
     document.getElementById('week-header-block').style.display = 'none';
   } catch(e) {
-    console.error('[Forecast] fetch error:', e.message);
     document.getElementById('w-loading').classList.remove('vis');
     document.getElementById('forecastText').innerHTML = `<p style="color:#f08;font-size:13px">${e.message}</p>`;
     document.getElementById('w-result').classList.add('vis');
@@ -2356,18 +2370,10 @@ H: ${arc(comp.H)}`;
 На что опираться в этом дне`;
 
   try {
-    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'gpt-4o-mini', max_tokens:1200,
-        messages:[
-          {role:'system', content: systemPrompt},
-          {role:'user', content:`Создай портрет дня.\n\n${compositeData}`}
-        ]
-      })
-    });
-    const json = await res.json();
-    const text = json.choices?.[0]?.message?.content || 'Не удалось сформировать портрет дня.';
+    const text = await fetchGPT([
+      {role:'system', content: systemPrompt},
+      {role:'user', content:`Создай портрет дня.\n\n${compositeData}`}
+    ], 1200);
 
     // Save locally
     saveDayPortrait({ date: today, text });
@@ -2725,18 +2731,10 @@ ${rel.intro}
 Живой язык, конкретика, никаких общих фраз.`;
 
   try {
-    const res = await fetch('https://old-morning-fa7b.rdzitoev.workers.dev/openai', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'gpt-4o-mini', max_tokens:2500,
-        messages:[
-          {role:'system', content: systemPrompt},
-          {role:'user', content:`Создай партнёрский портрет.\n\n${compositeData}`}
-        ]
-      })
-    });
-    const json = await res.json();
-    const text = json.choices?.[0]?.message?.content || 'Не удалось создать портрет совместимости.';
+    const text = await fetchGPT([
+      {role:'system', content: systemPrompt},
+      {role:'user', content:`Создай партнёрский портрет.\n\n${compositeData}`}
+    ], 2500);
 
     document.getElementById('cp-names-badge').textContent = `${name1} · ${name2}  ·  ${rel.label}`;
     document.getElementById('cp-result-text').innerHTML = `<p>${mdToHtml(text)}</p>`;
