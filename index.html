@@ -1101,7 +1101,7 @@ async function loadSubscription(uid) {
     } else {
       // New user — create doc with free tier, empty profile
       await window._fb.setDoc(ref, {
-        subscription: 'free',
+        subscription: 'pro',  // TEST MODE: all new users get Pro
         email: window._appState.firebaseUser?.email || '',
         profile: null,
         createdAt: window._fb.Timestamp.now()
